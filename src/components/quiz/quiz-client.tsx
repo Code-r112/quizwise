@@ -9,7 +9,7 @@ import QuizFeedbackDialog from './quiz-feedback-dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { AlertCircle, CheckCircle, Loader2 } from 'lucide-radix';
+import { AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
 import { getFeedbackAction } from '@/app/actions';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 
