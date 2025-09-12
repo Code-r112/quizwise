@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect } from 'react';
 import { useFormState, useFormStatus } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import { createQuizAction } from '@/app/actions';
@@ -8,13 +8,11 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Textarea } from '@/components/ui/textarea';
 import { Input } from '@/components/ui/input';
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { saveQuiz } from '@/lib/quiz-store';
-import { Loader2, AlertCircle } from 'lucide-react';
+import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
+import { Slider } from '@/components/ui/slider';
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -35,7 +33,6 @@ function SubmitButton() {
 export default function CreateQuizPage() {
   const initialState = { message: null, errors: null, quiz: null };
   const [state, dispatch] = useFormState(createQuizAction, initialState);
-  const [sourceType, setSourceType] = useState('text');
   const router = useRouter();
   const { toast } = useToast();
 
@@ -75,42 +72,20 @@ export default function CreateQuizPage() {
         <CardHeader>
           <CardTitle className="font-headline text-3xl">Create a New Quiz</CardTitle>
           <CardDescription>
-            Provide your source material and let our AI build your quiz.
+            Provide a topic and let our AI build your quiz.
           </CardDescription>
         </CardHeader>
         <CardContent>
           <form action={dispatch} className="space-y-8">
-            <Tabs defaultValue="text" className="w-full" onValueChange={(value) => setSourceType(value)}>
-              <TabsList className="grid w-full grid-cols-2">
-                <TabsTrigger value="text">From Text</TabsTrigger>
-                <TabsTrigger value="url">From URL</TabsTrigger>
-              </TabsList>
-              <input type="hidden" name="sourceType" value={sourceType} />
-              <TabsContent value="text" className="space-y-4 pt-4">
-                 <div className="space-y-2">
-                    <Label htmlFor="text-source">Paste your text</Label>
-                    <Textarea
-                        id="text-source"
-                        name="source"
-                        placeholder="Paste the content you want to create a quiz from..."
-                        className="min-h-[200px]"
-                        required={sourceType === 'text'}
-                    />
-                 </div>
-              </TabsContent>
-              <TabsContent value="url" className="space-y-4 pt-4">
-                 <div className="space-y-2">
-                    <Label htmlFor="url-source">Enter a URL</Label>
-                    <Input
-                        id="url-source"
-                        name="source"
-                        type="url"
-                        placeholder="https://example.com/article"
-                        required={sourceType === 'url'}
-                    />
-                 </div>
-              </TabsContent>
-            </Tabs>
+            <div className="space-y-2">
+              <Label htmlFor="topic">Quiz Topic</Label>
+              <Input
+                id="topic"
+                name="topic"
+                placeholder="e.g., 'The Roman Empire' or 'React.js Hooks'"
+                required
+              />
+            </div>
             
             <div className="space-y-4">
               <Label>Difficulty Level</Label>
@@ -128,6 +103,18 @@ export default function CreateQuizPage() {
                   <Label htmlFor="hard">Hard</Label>
                 </div>
               </RadioGroup>
+            </div>
+
+             <div className="space-y-4">
+              <Label htmlFor="numberOfQuestions">Number of Questions (1-10)</Label>
+               <Input 
+                id="numberOfQuestions"
+                name="numberOfQuestions"
+                type="number"
+                min="1"
+                max="10"
+                defaultValue="5"
+               />
             </div>
             
             <SubmitButton />

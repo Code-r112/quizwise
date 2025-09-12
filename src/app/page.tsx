@@ -2,11 +2,36 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
-import { ArrowRight, FileText, Link as LinkIcon } from 'lucide-react';
+import { ArrowRight, FileText, Link as LinkIcon, Plus, Minus } from 'lucide-react';
 import { placeholderImages } from '@/lib/placeholder-images';
+import {
+  Accordion,
+  AccordionContent,
+  AccordionItem,
+  AccordionTrigger,
+} from "@/components/ui/accordion"
 
 export default function Home() {
   const heroImage = placeholderImages.find(img => img.id === 'hero-quiz');
+
+  const faqs = [
+    {
+      question: "What is QuizWise?",
+      answer: "QuizWise is an AI-powered platform that allows you to generate quizzes from any topic. It's designed to make learning and assessment faster, easier, and more engaging."
+    },
+    {
+      question: "How do I create a quiz?",
+      answer: "Simply go to the 'Create Quiz' page, enter a topic you want to learn about, select a difficulty level, and choose the number of questions. Our AI will handle the rest!"
+    },
+    {
+      question: "What kind of questions does the AI generate?",
+      answer: "The AI can generate a variety of question formats, including multiple-choice, true/false, and short-answer questions to provide a comprehensive assessment."
+    },
+    {
+      question: "Can I share the quizzes I create?",
+      answer: "Yes! After you complete a quiz, you'll get a unique link on the results page that you can share with others."
+    }
+  ];
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -19,7 +44,7 @@ export default function Home() {
                   Unlock Knowledge with AI-Powered Quizzes
                 </h1>
                 <p className="max-w-[600px] text-muted-foreground md:text-xl">
-                  QuizWise transforms any text, document, or webpage into an interactive quiz, helping you learn faster and assess understanding with ease.
+                  QuizWise transforms any topic into an interactive quiz, helping you learn faster and assess understanding with ease.
                 </p>
               </div>
               <div className="flex flex-col gap-2 min-[400px]:flex-row">
@@ -63,9 +88,9 @@ export default function Home() {
                   <FileText className="h-8 w-8" />
                 </div>
               </div>
-              <h3 className="text-lg font-bold">From Text or URL</h3>
+              <h3 className="text-lg font-bold">From Any Topic</h3>
               <p className="text-sm text-muted-foreground">
-                Paste any text or provide a URL. Our AI reads and understands the content to create relevant questions.
+                Just enter a topic, from historical events to scientific concepts. Our AI creates relevant questions.
               </p>
             </div>
             <div className="grid gap-1 text-center">
@@ -76,7 +101,7 @@ export default function Home() {
               </div>
               <h3 className="text-lg font-bold">AI Generation</h3>
               <p className="text-sm text-muted-foreground">
-                Choose a difficulty and let our AI generate a mix of question types, from multiple-choice to short answer.
+                Choose a difficulty and number of questions, and let our AI generate a mix of question types.
               </p>
             </div>
             <div className="grid gap-1 text-center">
@@ -90,6 +115,31 @@ export default function Home() {
                 Get a unique link to share your quiz. Track scores and get AI-powered feedback on performance.
               </p>
             </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="w-full py-12 md:py-24 lg:py-32 bg-card">
+        <div className="container px-4 md:px-6">
+          <div className="flex flex-col items-center justify-center space-y-4 text-center">
+            <div className="space-y-2">
+              <h2 className="text-3xl font-bold tracking-tighter sm:text-5xl font-headline">Frequently Asked Questions</h2>
+              <p className="max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
+                Have questions? We've got answers.
+              </p>
+            </div>
+          </div>
+          <div className="mx-auto max-w-3xl w-full mt-12">
+            <Accordion type="single" collapsible className="w-full">
+              {faqs.map((faq, index) => (
+                <AccordionItem value={`item-${index}`} key={index}>
+                  <AccordionTrigger>{faq.question}</AccordionTrigger>
+                  <AccordionContent>
+                    {faq.answer}
+                  </AccordionContent>
+                </AccordionItem>
+              ))}
+            </Accordion>
           </div>
         </div>
       </section>

@@ -1,21 +1,20 @@
 'use server';
 
 import { z } from 'zod';
-import { generateQuizFromText } from '@/ai/flows/generate-quiz-from-text';
-import { generateQuizFromUrl } from '@/ai/flows/generate-quiz-from-url';
+import { generateQuizFromTopic } from '@/ai/flows/generate-quiz-from-topic';
 import { aiPoweredFeedback } from '@/ai/flows/receive-ai-powered-feedback';
 
 const quizInputSchema = z.object({
-  sourceType: z.enum(['text', 'url']),
-  source: z.string().min(1, 'Source cannot be empty.'),
+  topic: z.string().min(1, 'Topic cannot be empty.'),
   difficulty: z.enum(['easy', 'medium', 'hard']),
+  numberOfQuestions: z.coerce.number().min(1).max(10),
 });
 
 export async function createQuizAction(prevState: any, formData: FormData) {
   const validatedFields = quizInputSchema.safeParse({
-    sourceType: formData.get('sourceType'),
-    source: formData.get('source'),
+    topic: formData.get('topic'),
     difficulty: formData.get('difficulty'),
+    numberOfQuestions: formData.get('numberOfQuestions'),
   });
 
   if (!validatedFields.success) {
@@ -26,15 +25,10 @@ export async function createQuizAction(prevState: any, formData: FormData) {
     };
   }
   
-  const { sourceType, source, difficulty } = validatedFields.data;
+  const { topic, difficulty, numberOfQuestions } = validatedFields.data;
 
   try {
-    let result;
-    if (sourceType === 'text') {
-      result = await generateQuizFromText({ text: source, difficulty });
-    } else {
-      result = await generateQuizFromUrl({ url: source, difficulty });
-    }
+    const result = await generateQuizFromTopic({ topic, difficulty, numberOfQuestions });
 
     if (!result || !result.quiz) {
       throw new Error('AI failed to generate a quiz.');
@@ -46,8 +40,8 @@ export async function createQuizAction(prevState: any, formData: FormData) {
     return {
       message: 'Quiz generated successfully.',
       errors: null,
-      quiz: quizData,
-      sourceMaterial: source,
+      quiz: { ...quizData, title: quizData.title || `Quiz on ${topic}` },
+      sourceMaterial: `Quiz generated for topic: ${topic}`,
     };
 
   } catch (error) {

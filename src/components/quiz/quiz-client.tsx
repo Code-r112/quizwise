@@ -3,21 +3,18 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { getQuiz, saveQuizResults } from '@/lib/quiz-store';
-import type { Quiz, UserAnswer } from '@/lib/types';
+import type { Quiz, UserAnswer, Question } from '@/lib/types';
 import QuizQuestion from './quiz-question';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
-import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
+import { Loader2 } from 'lucide-react';
 
 export default function QuizClient({ quizId }: { quizId: string }) {
   const [quiz, setQuiz] = useState<Quiz | null>(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
-  const [userAnswers, setUserAnswers] = useState<UserAnswer[]>([]);
+  const [userAnswers, setUserAnswers] = useState<(string | null)[]>([]);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
-  const [isAnswerSubmitted, setIsAnswerSubmitted] = useState(false);
-  const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
   
   const router = useRouter();
 
@@ -25,6 +22,7 @@ export default function QuizClient({ quizId }: { quizId: string }) {
     const quizData = getQuiz(quizId);
     if (quizData) {
       setQuiz(quizData);
+      setUserAnswers(Array(quizData.questions.length).fill(null));
     } else {
       router.push('/'); // Or a 404 page
     }
@@ -36,38 +34,39 @@ export default function QuizClient({ quizId }: { quizId: string }) {
 
   const progressValue = useMemo(() => {
     if (!quiz) return 0;
-    return ((currentQuestionIndex + 1) / quiz.questions.length) * 100;
+    return ((currentQuestionIndex) / quiz.questions.length) * 100;
   }, [quiz, currentQuestionIndex]);
 
-  const handleAnswerSubmit = async () => {
-    if (!selectedAnswer || !currentQuestion) return;
-
-    const correct = selectedAnswer.toLowerCase().trim() === currentQuestion.correctAnswer.toLowerCase().trim();
-    setIsCorrect(correct);
-    setIsAnswerSubmitted(true);
-
-    const newAnswer: UserAnswer = {
-      questionIndex: currentQuestionIndex,
-      answer: selectedAnswer,
-      isCorrect: correct,
-    };
-    setUserAnswers(prev => [...prev, newAnswer]);
-  };
-  
   const handleNext = () => {
-    setIsAnswerSubmitted(false);
+    const newAnswers = [...userAnswers];
+    newAnswers[currentQuestionIndex] = selectedAnswer;
+    setUserAnswers(newAnswers);
+    
     setSelectedAnswer(null);
-    setIsCorrect(null);
 
     if (currentQuestionIndex < quiz!.questions.length - 1) {
       setCurrentQuestionIndex(prev => prev + 1);
     } else {
-      // Quiz finished
-      const score = (userAnswers.filter(a => a.isCorrect).length / quiz!.questions.length) * 100;
-      saveQuizResults(quizId, userAnswers, score);
+      // Quiz finished, calculate results and save
+      const finalAnswers: UserAnswer[] = quiz!.questions.map((question, index) => {
+        const userAnswer = newAnswers[index];
+        return {
+          questionIndex: index,
+          answer: userAnswer || "No answer",
+          isCorrect: userAnswer?.toLowerCase().trim() === question.correctAnswer.toLowerCase().trim(),
+        };
+      });
+      const score = (finalAnswers.filter(a => a.isCorrect).length / quiz!.questions.length) * 100;
+      saveQuizResults(quizId, finalAnswers, score);
       router.push(`/quiz/${quizId}/results`);
     }
   };
+
+  useEffect(() => {
+      if (userAnswers.length > 0) {
+        setSelectedAnswer(userAnswers[currentQuestionIndex]);
+      }
+  }, [currentQuestionIndex, userAnswers]);
 
   if (!quiz || !currentQuestion) {
     return (
@@ -76,6 +75,8 @@ export default function QuizClient({ quizId }: { quizId: string }) {
       </div>
     );
   }
+
+  const isLastQuestion = currentQuestionIndex === quiz.questions.length - 1;
 
   return (
     <div className="container mx-auto max-w-2xl py-12 px-4">
@@ -93,30 +94,20 @@ export default function QuizClient({ quizId }: { quizId: string }) {
           <QuizQuestion
             question={currentQuestion}
             onAnswerSelect={setSelectedAnswer}
-            isSubmitted={isAnswerSubmitted}
-            isCorrect={isCorrect}
+            isSubmitted={false} // Never show immediate feedback
+            isCorrect={null}
             userAnswer={selectedAnswer}
           />
-           {isAnswerSubmitted && (
-            <Alert variant={isCorrect ? 'default' : 'destructive'} className="mt-6 animate-in fade-in">
-              {isCorrect ? <CheckCircle className="h-4 w-4" /> : <AlertCircle className="h-4 w-4" />}
-              <AlertTitle>{isCorrect ? 'Correct!' : 'Incorrect'}</AlertTitle>
-              <AlertDescription>
-                {isCorrect ? 'Great job!' : `The correct answer is: ${currentQuestion.correctAnswer}`}
-              </AlertDescription>
-            </Alert>
-          )}
         </CardContent>
-        <CardFooter>
-          {isAnswerSubmitted ? (
-             <Button onClick={handleNext} className="w-full bg-accent hover:bg-accent/90 text-accent-foreground">
-                {currentQuestionIndex === quiz.questions.length - 1 ? 'Finish Quiz' : 'Next Question'}
+        <CardFooter className="gap-2">
+            {currentQuestionIndex > 0 && (
+                 <Button onClick={() => setCurrentQuestionIndex(prev => prev - 1)} variant="outline">
+                    Previous
+                 </Button>
+            )}
+             <Button onClick={handleNext} disabled={!selectedAnswer} className="w-full">
+                {isLastQuestion ? 'Finish Quiz' : 'Next Question'}
              </Button>
-          ) : (
-            <Button onClick={handleAnswerSubmit} disabled={!selectedAnswer} className="w-full">
-              Submit Answer
-            </Button>
-          )}
         </CardFooter>
       </Card>
     </div>
