@@ -24,7 +24,7 @@ export default function Footer() {
                 </Link>
               </li>
               <li>
-                <Link href="/create" className="text-gray-400 hover:text-white transition-colors">
+                <Link href="/dashboard" className="text-gray-400 hover:text-white transition-colors">
                   Create Quiz
                 </Link>
               </li>

@@ -49,7 +49,7 @@ export default function Home() {
               </div>
               <div className="flex flex-col gap-2 min-[400px]:flex-row">
                 <Button asChild size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground">
-                  <Link href="/create">
+                  <Link href="/dashboard">
                     Create Your First Quiz
                     <ArrowRight className="ml-2 h-4 w-4" />
                   </Link>

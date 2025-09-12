@@ -8,6 +8,9 @@ export const saveQuiz = (quizData: Omit<Quiz, 'id'>): string => {
   const quiz: Quiz = { ...quizData, id };
   try {
     localStorage.setItem(`quiz-${id}`, JSON.stringify(quiz));
+    const quizIds = JSON.parse(localStorage.getItem('quizIds') || '[]');
+    quizIds.push(id);
+    localStorage.setItem('quizIds', JSON.stringify(quizIds));
     return id;
   } catch (error) {
     console.error('Failed to save quiz to localStorage', error);
@@ -24,6 +27,18 @@ export const getQuiz = (id: string): Quiz | null => {
     console.error('Failed to get quiz from localStorage', error);
     return null;
   }
+};
+
+export const getAllQuizzes = (): Quiz[] => {
+    if (typeof window === 'undefined') return [];
+    try {
+        const quizIds = JSON.parse(localStorage.getItem('quizIds') || '[]');
+        const quizzes = quizIds.map((id: string) => getQuiz(id)).filter(Boolean);
+        return quizzes as Quiz[];
+    } catch (error) {
+        console.error('Failed to get all quizzes from localStorage', error);
+        return [];
+    }
 };
 
 export const saveQuizResults = (quizId: string, answers: UserAnswer[], score: number) => {

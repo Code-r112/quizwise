@@ -138,7 +138,7 @@ export default function QuizResultsClient({ quizId }: { quizId: string }) {
           </ScrollArea>
         </CardContent>
         <CardFooter className="flex-col sm:flex-row gap-2">
-            <Button onClick={() => router.push('/create')} className="w-full sm:w-auto">
+            <Button onClick={() => router.push('/dashboard')} className="w-full sm:w-auto">
                 <FileText className="mr-2 h-4 w-4" /> Create New Quiz
             </Button>
             <Button onClick={handleShare} variant="outline" className="w-full sm:w-auto">

@@ -49,7 +49,7 @@ export default function CreateQuizPage() {
           title: "Success!",
           description: "Your quiz has been generated.",
         });
-        router.push(`/quiz/${quizId}`);
+        router.push(`/dashboard`);
       } else {
         toast({
             variant: "destructive",
