@@ -5,12 +5,10 @@ import { useRouter } from 'next/navigation';
 import { getQuiz, saveQuizResults } from '@/lib/quiz-store';
 import type { Quiz, UserAnswer } from '@/lib/types';
 import QuizQuestion from './quiz-question';
-import QuizFeedbackDialog from './quiz-feedback-dialog';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { AlertCircle, CheckCircle, Loader2 } from 'lucide-react';
-import { getFeedbackAction } from '@/app/actions';
 import { Alert, AlertDescription, AlertTitle } from '../ui/alert';
 
 export default function QuizClient({ quizId }: { quizId: string }) {
@@ -20,9 +18,6 @@ export default function QuizClient({ quizId }: { quizId: string }) {
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
   const [isAnswerSubmitted, setIsAnswerSubmitted] = useState(false);
   const [isCorrect, setIsCorrect] = useState<boolean | null>(null);
-  const [feedback, setFeedback] = useState<string | null>(null);
-  const [isFeedbackLoading, setIsFeedbackLoading] = useState(false);
-  const [showFeedbackDialog, setShowFeedbackDialog] = useState(false);
   
   const router = useRouter();
 
@@ -57,31 +52,12 @@ export default function QuizClient({ quizId }: { quizId: string }) {
       isCorrect: correct,
     };
     setUserAnswers(prev => [...prev, newAnswer]);
-
-    if (!correct) {
-        setIsFeedbackLoading(true);
-        setShowFeedbackDialog(true);
-        const feedbackResult = await getFeedbackAction({
-            userAnswer: selectedAnswer,
-            correctAnswer: currentQuestion.correctAnswer,
-            sourceMaterial: quiz?.sourceMaterial || '',
-            question: currentQuestion.text,
-        });
-        setIsFeedbackLoading(false);
-        if (feedbackResult.explanation) {
-            setFeedback(feedbackResult.explanation);
-        } else {
-            setFeedback("Could not load feedback at this time.");
-        }
-    }
   };
   
   const handleNext = () => {
     setIsAnswerSubmitted(false);
     setSelectedAnswer(null);
     setIsCorrect(null);
-    setFeedback(null);
-    setShowFeedbackDialog(false);
 
     if (currentQuestionIndex < quiz!.questions.length - 1) {
       setCurrentQuestionIndex(prev => prev + 1);
@@ -143,13 +119,6 @@ export default function QuizClient({ quizId }: { quizId: string }) {
           )}
         </CardFooter>
       </Card>
-      
-      {!isCorrect && <QuizFeedbackDialog 
-        isOpen={showFeedbackDialog}
-        isLoading={isFeedbackLoading}
-        feedback={feedback}
-        onOpenChange={setShowFeedbackDialog}
-      />}
     </div>
   );
 }
