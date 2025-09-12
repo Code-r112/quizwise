@@ -1,3 +1,10 @@
 {
-  "placeholderImages": []
+  "placeholderImages": [
+    {
+      "id": "hero-quiz",
+      "description": "A vibrant image representing learning and knowledge, for the homepage hero section.",
+      "imageUrl": "https://picsum.photos/seed/quizwise1/1200/800",
+      "imageHint": "learning books"
+    }
+  ]
 }
