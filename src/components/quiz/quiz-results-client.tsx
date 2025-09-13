@@ -76,7 +76,7 @@ export default function QuizResultsClient({ quizId }: { quizId: string }) {
             if (analyticsResult.analytics) {
               setAnalytics(analyticsResult.analytics);
             } else if (analyticsResult.error) {
-              console.error(analyticsResult.error);
+              console.error("Failed to get quiz analytics:", analyticsResult.error);
             }
 
             // We need a user to fetch their specific results

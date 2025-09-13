@@ -5,7 +5,7 @@ import { generateQuizFromTopic } from '@/ai/flows/generate-quiz-from-topic';
 import { generateQuizFromText } from '@/ai/flows/generate-quiz-from-text';
 import { generateQuizFromUrl } from '@/ai/flows/generate-quiz-from-url';
 import { aiPoweredFeedback } from '@/ai/flows/receive-ai-powered-feedback';
-import { getQuizAnalytics } from '@/lib/quiz-store';
+import { getAnalyticsAction as getQuizAnalytics } from '@/lib/quiz-store.server';
 
 const quizInputSchema = z.object({
   topic: z.string().min(1, 'Topic cannot be empty.'),
