@@ -7,7 +7,7 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { getAllQuizzes, getQuizResults } from '@/lib/quiz-store';
+import { getAllQuizzes, getQuizResults, deleteQuiz } from '@/lib/quiz-store';
 import type { Quiz } from '@/lib/types';
 import { Plus, Play, Trash2, Share2, Loader2, BarChart2 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
@@ -27,32 +27,43 @@ import { useToast } from '@/hooks/use-toast';
 export default function DashboardPage() {
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const [quizToDelete, setQuizToDelete] = useState<string | null>(null);
+  const [loadingQuizzes, setLoadingQuizzes] = useState(true);
+  const [resultsMap, setResultsMap] = useState<Record<string, boolean>>({});
   const router = useRouter();
-  const { user, loading } = useAuth();
+  const { user, loading: authLoading } = useAuth();
   const { toast } = useToast();
 
   useEffect(() => {
-    if (!loading && !user) {
+    if (!authLoading && !user) {
       router.push('/');
     } else if (user) {
-      setQuizzes(getAllQuizzes());
+      const fetchQuizzes = async () => {
+        setLoadingQuizzes(true);
+        const userQuizzes = await getAllQuizzes(user.uid);
+        setQuizzes(userQuizzes);
+
+        const resultsExistence: Record<string, boolean> = {};
+        for (const quiz of userQuizzes) {
+            const results = await getQuizResults(quiz.id, user.uid);
+            resultsExistence[quiz.id] = results !== null;
+        }
+        setResultsMap(resultsExistence);
+
+        setLoadingQuizzes(false);
+      };
+      fetchQuizzes();
     }
-  }, [user, loading, router]);
+  }, [user, authLoading, router]);
 
   const handleTakeQuiz = (quizId: string) => {
     router.push(`/quiz/${quizId}`);
   };
 
-  const confirmDeleteQuiz = () => {
+  const confirmDeleteQuiz = async () => {
     if (quizToDelete) {
-        if (typeof window !== 'undefined') {
-            localStorage.removeItem(`quiz-${quizToDelete}`);
-            localStorage.removeItem(`results-${quizToDelete}`);
-            const quizIds = JSON.parse(localStorage.getItem('quizIds') || '[]').filter((id: string) => id !== quizToDelete);
-            localStorage.setItem('quizIds', JSON.stringify(quizIds));
-            setQuizzes(getAllQuizzes());
-            toast({ title: "Quiz Deleted", description: "The quiz has been successfully deleted." });
-        }
+        await deleteQuiz(quizToDelete);
+        setQuizzes(quizzes.filter((quiz) => quiz.id !== quizToDelete));
+        toast({ title: "Quiz Deleted", description: "The quiz has been successfully deleted." });
         setQuizToDelete(null);
     }
   };
@@ -68,11 +79,10 @@ export default function DashboardPage() {
   };
   
   const hasResults = (quizId: string) => {
-    if (typeof window === 'undefined') return false;
-    return getQuizResults(quizId) !== null;
+    return resultsMap[quizId] || false;
   }
 
-  if (loading || !user) {
+  if (authLoading || loadingQuizzes || !user) {
     return (
       <div className="flex h-screen items-center justify-center">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />

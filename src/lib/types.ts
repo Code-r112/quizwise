@@ -13,6 +13,7 @@ export interface Question {
 
 export interface Quiz {
   id: string;
+  userId: string;
   title: string;
   sourceMaterial: string;
   questions: Question[];

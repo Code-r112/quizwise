@@ -12,6 +12,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
 import { getFeedbackAction } from '@/app/actions';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
+import { useAuth } from '@/hooks/use-auth';
 
 function Feedback({ question, userAnswer, sourceMaterial }: { question: Question, userAnswer: string, sourceMaterial: string }) {
     const [feedback, setFeedback] = useState('');
@@ -59,22 +60,37 @@ export default function QuizResultsClient({ quizId }: { quizId: string }) {
   const [quiz, setQuiz] = useState<Quiz | null>(null);
   const router = useRouter();
   const { toast } = useToast();
+  const { user, loading: authLoading } = useAuth();
+
 
   useEffect(() => {
-    const resultsData = getQuizResults(quizId);
-    const quizData = getQuiz(quizId);
-    if (resultsData && quizData) {
-      setResults(resultsData);
-      setQuiz(quizData);
-    } else {
-      // If no results, maybe they want to take the quiz
-      if (quizData) {
-        router.push(`/quiz/${quizId}`);
-      } else {
-        router.push('/');
-      }
-    }
-  }, [quizId, router]);
+    if(authLoading) return;
+
+    const fetchQuizAndResults = async () => {
+        const quizData = await getQuiz(quizId);
+        if (quizData) {
+            setQuiz(quizData);
+            // We need a user to fetch their specific results
+            if(user) {
+                const resultsData = await getQuizResults(quizId, user.uid);
+                 if (resultsData) {
+                    setResults(resultsData);
+                } else {
+                    // No results for this user, push to take the quiz
+                    router.push(`/quiz/${quizId}`);
+                }
+            } else {
+                // If user is not logged in, they can't have results yet.
+                 router.push(`/quiz/${quizId}`);
+            }
+           
+        } else {
+            router.push('/');
+        }
+    };
+
+    fetchQuizAndResults();
+  }, [quizId, router, user, authLoading]);
 
   const handleShare = () => {
     const url = window.location.href.replace('/results', '');

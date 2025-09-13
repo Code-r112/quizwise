@@ -9,23 +9,28 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
 import { Loader2 } from 'lucide-react';
+import { useAuth } from '@/hooks/use-auth';
 
 export default function QuizClient({ quizId }: { quizId: string }) {
   const [quiz, setQuiz] = useState<Quiz | null>(null);
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [userAnswers, setUserAnswers] = useState<(string | null)[]>([]);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
+  const { user } = useAuth();
   
   const router = useRouter();
 
   useEffect(() => {
-    const quizData = getQuiz(quizId);
-    if (quizData) {
-      setQuiz(quizData);
-      setUserAnswers(Array(quizData.questions.length).fill(null));
-    } else {
-      router.push('/'); // Or a 404 page
-    }
+    const fetchQuiz = async () => {
+      const quizData = await getQuiz(quizId);
+      if (quizData) {
+        setQuiz(quizData);
+        setUserAnswers(Array(quizData.questions.length).fill(null));
+      } else {
+        router.push('/'); // Or a 404 page
+      }
+    };
+    fetchQuiz();
   }, [quizId, router]);
 
   const currentQuestion = useMemo(() => {
@@ -37,7 +42,7 @@ export default function QuizClient({ quizId }: { quizId: string }) {
     return ((currentQuestionIndex) / quiz.questions.length) * 100;
   }, [quiz, currentQuestionIndex]);
 
-  const handleNext = () => {
+  const handleNext = async () => {
     const newAnswers = [...userAnswers];
     newAnswers[currentQuestionIndex] = selectedAnswer;
     setUserAnswers(newAnswers);
@@ -57,7 +62,7 @@ export default function QuizClient({ quizId }: { quizId: string }) {
         };
       });
       const score = (finalAnswers.filter(a => a.isCorrect).length / quiz!.questions.length) * 100;
-      saveQuizResults(quizId, finalAnswers, score);
+      await saveQuizResults(quizId, user?.uid || null, finalAnswers, score);
       router.push(`/quiz/${quizId}/results`);
     }
   };

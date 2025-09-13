@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useActionState } from 'react';
+import { useEffect, useActionState } from 'react';
 import { useFormStatus } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import {
@@ -41,28 +41,32 @@ const initialState = { message: null, errors: null, quiz: null, sourceMaterial: 
 function QuizFormContainer({ state, children }: { state: any, children: React.ReactNode }) {
     const router = useRouter();
     const { toast } = useToast();
+    const { user } = useAuth();
 
     useEffect(() => {
-        if (state.quiz) {
-            const quizId = saveQuiz({
-                title: state.quiz.title || "Generated Quiz",
-                sourceMaterial: state.sourceMaterial,
-                questions: state.quiz.questions,
-            });
+        if (state.quiz && user) {
+            const handleSave = async () => {
+                const quizId = await saveQuiz({
+                    title: state.quiz.title || "Generated Quiz",
+                    sourceMaterial: state.sourceMaterial,
+                    questions: state.quiz.questions,
+                }, user.uid);
 
-            if (quizId) {
-                toast({
-                    title: "Success!",
-                    description: "Your quiz has been generated.",
-                });
-                router.push(`/dashboard`);
-            } else {
-                toast({
-                    variant: "destructive",
-                    title: "Error",
-                    description: "Could not save the generated quiz.",
-                });
+                if (quizId) {
+                    toast({
+                        title: "Success!",
+                        description: "Your quiz has been generated.",
+                    });
+                    router.push(`/dashboard`);
+                } else {
+                    toast({
+                        variant: "destructive",
+                        title: "Error",
+                        description: "Could not save the generated quiz.",
+                    });
+                }
             }
+            handleSave();
         } else if (state.message && !state.quiz) {
             toast({
                 variant: "destructive",
@@ -70,7 +74,7 @@ function QuizFormContainer({ state, children }: { state: any, children: React.Re
                 description: state.message,
             });
         }
-    }, [state, router, toast]);
+    }, [state, router, toast, user]);
 
     return <>{children}</>;
 }
