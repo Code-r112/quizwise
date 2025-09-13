@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { getQuizResults, getQuiz, getQuizAnalytics } from '@/lib/quiz-store';
+import { getQuizResults, getQuiz } from '@/lib/quiz-store';
 import type { Quiz, UserAnswer, Question } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
@@ -10,7 +10,7 @@ import { CheckCircle, XCircle, Users, Target, Share2, Home, Sparkles, Loader2, R
 import { useToast } from '@/hooks/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
-import { getFeedbackAction } from '@/app/actions';
+import { getFeedbackAction, getAnalyticsAction } from '@/app/actions';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { useAuth } from '@/hooks/use-auth';
 
@@ -71,8 +71,14 @@ export default function QuizResultsClient({ quizId }: { quizId: string }) {
         const quizData = await getQuiz(quizId);
         if (quizData) {
             setQuiz(quizData);
-            const analyticsData = await getQuizAnalytics(quizId);
-            setAnalytics(analyticsData);
+            
+            const analyticsResult = await getAnalyticsAction({ quizId });
+            if (analyticsResult.analytics) {
+              setAnalytics(analyticsResult.analytics);
+            } else if (analyticsResult.error) {
+              console.error(analyticsResult.error);
+            }
+
             // We need a user to fetch their specific results
             if(user) {
                 const resultsData = await getQuizResults(quizId, user.uid);

@@ -5,6 +5,7 @@ import { generateQuizFromTopic } from '@/ai/flows/generate-quiz-from-topic';
 import { generateQuizFromText } from '@/ai/flows/generate-quiz-from-text';
 import { generateQuizFromUrl } from '@/ai/flows/generate-quiz-from-url';
 import { aiPoweredFeedback } from '@/ai/flows/receive-ai-powered-feedback';
+import { getQuizAnalytics } from '@/lib/quiz-store';
 
 const quizInputSchema = z.object({
   topic: z.string().min(1, 'Topic cannot be empty.'),
@@ -176,5 +177,25 @@ export async function getFeedbackAction(input: {
     } catch (error) {
         console.error(error);
         return { error: 'Failed to get AI feedback.' };
+    }
+}
+
+const analyticsInputSchema = z.object({
+    quizId: z.string(),
+});
+
+export async function getAnalyticsAction(input: { quizId: string }) {
+    const validatedFields = analyticsInputSchema.safeParse(input);
+
+    if (!validatedFields.success) {
+        return { error: 'Invalid input for analytics.', analytics: null };
+    }
+    
+    try {
+        const analytics = await getQuizAnalytics(validatedFields.data.quizId);
+        return { analytics, error: null };
+    } catch (error) {
+        console.error('Failed to get quiz analytics:', error);
+        return { error: 'Failed to get quiz analytics.', analytics: null };
     }
 }
