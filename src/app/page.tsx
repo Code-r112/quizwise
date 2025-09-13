@@ -35,37 +35,30 @@ export default function Home() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <section className="w-full py-12 md:py-24 lg:py-32 xl:py-48 bg-white">
+      <section className="relative w-full py-12 md:py-24 lg:py-32 xl:py-48 bg-white overflow-hidden">
+        <div
+          className="absolute inset-0 -z-10 h-full w-full bg-white bg-[linear-gradient(to_right,#f0f0f0_1px,transparent_1px),linear-gradient(to_bottom,#f0f0f0_1px,transparent_1px)] bg-[size:6rem_4rem]">
+          <div
+            className="absolute bottom-0 left-0 right-0 top-0 bg-[radial-gradient(circle_500px_at_50%_200px,#C9EBFF,transparent)]"></div>
+        </div>
         <div className="container px-4 md:px-6">
-          <div className="grid gap-6 lg:grid-cols-[1fr_400px] lg:gap-12 xl:grid-cols-[1fr_600px]">
-            <div className="flex flex-col justify-center space-y-4">
-              <div className="space-y-2">
-                <h1 className="text-3xl font-bold tracking-tighter sm:text-5xl xl:text-6xl/none font-headline">
-                  Unlock Knowledge with AI-Powered Quizzes
-                </h1>
-                <p className="max-w-[600px] text-muted-foreground md:text-xl">
-                  QuizWise transforms any topic into an interactive quiz, helping you learn faster and assess understanding with ease.
-                </p>
-              </div>
-              <div className="flex flex-col gap-2 min-[400px]:flex-row">
-                <Button asChild size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground">
-                  <Link href="/dashboard">
-                    Create Your First Quiz
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Link>
-                </Button>
-              </div>
+          <div className="flex flex-col items-center space-y-4 text-center">
+            <div className="space-y-4">
+              <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl lg:text-7xl font-headline">
+                Unlock Knowledge with AI-Powered Quizzes
+              </h1>
+              <p className="mx-auto max-w-[700px] text-muted-foreground md:text-xl">
+                QuizWise transforms any topic into an interactive quiz, helping you learn faster and assess understanding with ease.
+              </p>
             </div>
-            {heroImage && (
-              <Image
-                alt="Hero"
-                className="mx-auto aspect-video overflow-hidden rounded-xl object-cover sm:w-full lg:order-last lg:aspect-square"
-                data-ai-hint={heroImage.imageHint}
-                height="550"
-                src={heroImage.imageUrl}
-                width="550"
-              />
-            )}
+            <div className="space-x-4">
+              <Button asChild size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground">
+                <Link href="/dashboard">
+                  Create Your First Quiz
+                  <ArrowRight className="ml-2 h-4 w-4" />
+                </Link>
+              </Button>
+            </div>
           </div>
         </div>
       </section>
