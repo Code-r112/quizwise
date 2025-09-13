@@ -1,7 +1,7 @@
 'use client';
 
-import { useEffect, useState, useTransition } from 'react';
-import { useFormState, useFormStatus } from 'react-dom';
+import { useEffect, useState, useActionState } from 'react';
+import { useFormStatus } from 'react-dom';
 import { useRouter } from 'next/navigation';
 import {
   createQuizFromTopicAction,
@@ -80,9 +80,9 @@ export default function CreateQuizPage() {
   const { user, loading } = useAuth();
   const router = useRouter();
   
-  const [topicState, topicDispatch] = useFormState(createQuizFromTopicAction, initialState);
-  const [textState, textDispatch] = useFormState(createQuizFromTextAction, initialState);
-  const [urlState, urlDispatch] = useFormState(createQuizFromUrlAction, initialState);
+  const [topicState, topicDispatch] = useActionState(createQuizFromTopicAction, initialState);
+  const [textState, textDispatch] = useActionState(createQuizFromTextAction, initialState);
+  const [urlState, urlDispatch] = useActionState(createQuizFromUrlAction, initialState);
 
 
   useEffect(() => {
