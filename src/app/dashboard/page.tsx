@@ -9,7 +9,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { getAllQuizzes, getQuizResults, deleteQuiz } from '@/lib/quiz-store';
 import type { Quiz } from '@/lib/types';
-import { Plus, Play, Trash2, Share2, Loader2, BarChart2 } from 'lucide-react';
+import { Plus, Trash2, Loader2, BarChart2 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import {
   AlertDialog,
@@ -22,6 +22,7 @@ import {
   AlertDialogTitle,
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useToast } from '@/hooks/use-toast';
 
 export default function DashboardPage() {
@@ -55,10 +56,6 @@ export default function DashboardPage() {
     }
   }, [user, authLoading, router]);
 
-  const handleTakeQuiz = (quizId: string) => {
-    router.push(`/quiz/${quizId}`);
-  };
-
   const confirmDeleteQuiz = async () => {
     if (quizToDelete && user) {
         await deleteQuiz(quizToDelete, user.uid);
@@ -66,16 +63,6 @@ export default function DashboardPage() {
         toast({ title: "Quiz Deleted", description: "The quiz has been successfully deleted." });
         setQuizToDelete(null);
     }
-  };
-
-  const handleShareQuiz = (quizId: string) => {
-    const url = `${window.location.origin}/quiz/${quizId}`;
-    navigator.clipboard.writeText(url).then(() => {
-      toast({
-        title: 'Link Copied!',
-        description: 'Quiz link has been copied to your clipboard.',
-      });
-    });
   };
   
   const hasResults = (quizId: string) => {
@@ -112,73 +99,79 @@ export default function DashboardPage() {
             </Button>
         </CardHeader>
         <CardContent>
-          {quizzes.length > 0 ? (
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Quiz Title</TableHead>
-                  <TableHead>Questions</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {quizzes.map((quiz) => (
-                  <TableRow key={quiz.id}>
-                    <TableCell className="font-medium">
-                        <Link href={`/quiz/${quiz.id}/results`} className="hover:underline">
-                            {quiz.title}
-                        </Link>
-                    </TableCell>
-                    <TableCell>{quiz.questions.length}</TableCell>
-                    <TableCell className="text-right space-x-2">
-                       <Button variant="outline" size="sm" onClick={() => handleTakeQuiz(quiz.id)}>
-                            <Play className="mr-2 h-4 w-4" />
-                            Take Quiz
-                        </Button>
-                        {hasResults(quiz.id) && (
-                            <Button variant="outline" size="sm" onClick={() => router.push(`/quiz/${quiz.id}/results`)}>
-                                <BarChart2 className="mr-2 h-4 w-4" />
-                                View Results
-                            </Button>
-                        )}
-                        <Button variant="outline" size="sm" onClick={() => handleShareQuiz(quiz.id)}>
-                            <Share2 className="mr-2 h-4 w-4" />
-                            Share
-                        </Button>
-                        <AlertDialog>
-                          <AlertDialogTrigger asChild>
-                            <Button variant="destructive" size="sm" onClick={() => setQuizToDelete(quiz.id)}>
-                                <Trash2 className="mr-2 h-4 w-4" />
-                                Delete
-                            </Button>
-                          </AlertDialogTrigger>
-                          <AlertDialogContent>
-                            <AlertDialogHeader>
-                              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
-                              <AlertDialogDescription>
-                                This action cannot be undone. This will permanently delete your quiz
-                                and any associated results.
-                              </AlertDialogDescription>
-                            </AlertDialogHeader>
-                            <AlertDialogFooter>
-                              <AlertDialogCancel onClick={() => setQuizToDelete(null)}>Cancel</AlertDialogCancel>
-                              <AlertDialogAction onClick={confirmDeleteQuiz}>Delete</AlertDialogAction>
-                            </AlertDialogFooter>
-                          </AlertDialogContent>
-                        </AlertDialog>
-                    </TableCell>
+          <TooltipProvider>
+            {quizzes.length > 0 ? (
+              <Table>
+                <TableHeader>
+                  <TableRow>
+                    <TableHead>Quiz Title</TableHead>
+                    <TableHead>Questions</TableHead>
+                    <TableHead className="text-right">Actions</TableHead>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          ) : (
-            <div className="text-center py-12">
-                <h3 className="text-lg font-semibold">No Quizzes Yet!</h3>
-                <p className="text-muted-foreground mt-2 mb-4">
-                    Click the button above to create your first quiz.
-                </p>
-            </div>
-          )}
+                </TableHeader>
+                <TableBody>
+                  {quizzes.map((quiz) => (
+                    <TableRow key={quiz.id}>
+                      <TableCell className="font-medium">
+                          <Link href={`/quiz/${quiz.id}/results`} className="hover:underline">
+                              {quiz.title}
+                          </Link>
+                      </TableCell>
+                      <TableCell>{quiz.questions.length}</TableCell>
+                      <TableCell className="text-right space-x-2">
+                          {hasResults(quiz.id) && (
+                              <Tooltip>
+                                <TooltipTrigger asChild>
+                                  <Button variant="ghost" size="icon" onClick={() => router.push(`/quiz/${quiz.id}/results`)}>
+                                      <BarChart2 className="h-4 w-4" />
+                                  </Button>
+                                </TooltipTrigger>
+                                <TooltipContent>
+                                  <p>View Results</p>
+                                </TooltipContent>
+                              </Tooltip>
+                          )}
+                          <AlertDialog>
+                            <Tooltip>
+                              <TooltipTrigger asChild>
+                                <AlertDialogTrigger asChild>
+                                  <Button variant="ghost" size="icon" onClick={() => setQuizToDelete(quiz.id)}>
+                                      <Trash2 className="h-4 w-4 text-destructive" />
+                                  </Button>
+                                </AlertDialogTrigger>
+                              </TooltipTrigger>
+                              <TooltipContent>
+                                <p>Delete Quiz</p>
+                              </TooltipContent>
+                            </Tooltip>
+                            <AlertDialogContent>
+                              <AlertDialogHeader>
+                                <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                                <AlertDialogDescription>
+                                  This action cannot be undone. This will permanently delete your quiz
+                                  and any associated results.
+                                </AlertDialogDescription>
+                              </AlertDialogHeader>
+                              <AlertDialogFooter>
+                                <AlertDialogCancel onClick={() => setQuizToDelete(null)}>Cancel</AlertDialogCancel>
+                                <AlertDialogAction onClick={confirmDeleteQuiz}>Delete</AlertDialogAction>
+                              </AlertDialogFooter>
+                            </AlertDialogContent>
+                          </AlertDialog>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            ) : (
+              <div className="text-center py-12">
+                  <h3 className="text-lg font-semibold">No Quizzes Yet!</h3>
+                  <p className="text-muted-foreground mt-2 mb-4">
+                      Click the button above to create your first quiz.
+                  </p>
+              </div>
+            )}
+          </TooltipProvider>
         </CardContent>
       </Card>
     </div>
