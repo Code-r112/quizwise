@@ -12,7 +12,7 @@ import { Input } from '@/components/ui/input';
 import { saveQuiz } from '@/lib/quiz-store';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
-import { Slider } from '@/components/ui/slider';
+import { useAuth } from '@/hooks/use-auth';
 
 function SubmitButton() {
   const { pending } = useFormStatus();
@@ -35,6 +35,13 @@ export default function CreateQuizPage() {
   const [state, dispatch] = useFormState(createQuizAction, initialState);
   const router = useRouter();
   const { toast } = useToast();
+  const { user, loading } = useAuth();
+
+  useEffect(() => {
+    if (!loading && !user) {
+      router.push('/');
+    }
+  }, [user, loading, router]);
 
   useEffect(() => {
     if (state.quiz) {
@@ -65,6 +72,14 @@ export default function CreateQuizPage() {
         });
     }
   }, [state, router, toast]);
+
+  if (loading || !user) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="container mx-auto max-w-2xl py-12 px-4">

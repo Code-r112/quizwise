@@ -9,23 +9,27 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { getAllQuizzes } from '@/lib/quiz-store';
 import type { Quiz } from '@/lib/types';
-import { Plus, Play, Trash2 } from 'lucide-react';
+import { Plus, Play, Trash2, Loader2 } from 'lucide-react';
+import { useAuth } from '@/hooks/use-auth';
 
 export default function DashboardPage() {
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
   const router = useRouter();
+  const { user, loading } = useAuth();
 
   useEffect(() => {
-    setQuizzes(getAllQuizzes());
-  }, []);
+    if (!loading && !user) {
+      router.push('/');
+    } else if (user) {
+      setQuizzes(getAllQuizzes());
+    }
+  }, [user, loading, router]);
 
   const handleTakeQuiz = (quizId: string) => {
     router.push(`/quiz/${quizId}`);
   };
 
   const handleDeleteQuiz = (quizId: string) => {
-    // Note: This is a simple implementation. A more robust solution
-    // would involve confirming the deletion with the user.
     if (typeof window !== 'undefined') {
       localStorage.removeItem(`quiz-${quizId}`);
       const quizIds = JSON.parse(localStorage.getItem('quizIds') || '[]').filter((id: string) => id !== quizId);
@@ -33,6 +37,14 @@ export default function DashboardPage() {
       setQuizzes(getAllQuizzes());
     }
   };
+
+  if (loading || !user) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      </div>
+    );
+  }
   
   return (
     <div className="container mx-auto max-w-4xl py-12 px-4">
