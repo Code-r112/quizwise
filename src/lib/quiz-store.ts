@@ -2,7 +2,7 @@
 
 import type { Quiz, UserAnswer } from '@/lib/types';
 import { db } from '@/lib/firebase';
-import { collection, doc, addDoc, getDoc, getDocs, query, where, updateDoc, setDoc } from 'firebase/firestore';
+import { collection, doc, addDoc, getDoc, getDocs, query, where, updateDoc, setDoc, deleteDoc, writeBatch } from 'firebase/firestore';
 
 export const saveQuiz = async (quizData: Omit<Quiz, 'id' | 'userId'>, userId: string): Promise<string> => {
   try {
@@ -47,21 +47,26 @@ export const getAllQuizzes = async (userId: string): Promise<Quiz[]> => {
     }
 };
 
-export const deleteQuiz = async (quizId: string): Promise<void> => {
+export const deleteQuiz = async (quizId: string, userId: string): Promise<void> => {
     try {
-        await doc(db, 'quizzes', quizId).delete();
-        // You might want to delete associated results as well.
-        // This is more complex and would require querying the results subcollection.
+        // First, delete the quiz document itself
+        await deleteDoc(doc(db, 'quizzes', quizId));
+
+        // Then, delete the specific user's result for that quiz.
+        const resultId = `${quizId}_${userId}`;
+        const resultDocRef = doc(db, 'quizResults', resultId);
+        await deleteDoc(resultDocRef);
+
     } catch (error) {
-        console.error('Failed to delete quiz from Firestore', error);
+        console.error('Failed to delete quiz and its results from Firestore', error);
     }
 }
 
 
-export const saveQuizResults = async (quizId: string, userId: string | null, answers: UserAnswer[], score: number) => {
+export const saveQuizResults = async (quizId: string, userId: string, answers: UserAnswer[], score: number) => {
     try {
-        const resultId = userId || crypto.randomUUID();
-        const resultsRef = doc(db, "quizResults", `${quizId}_${resultId}`);
+        const resultId = `${quizId}_${userId}`;
+        const resultsRef = doc(db, "quizResults", resultId);
         await setDoc(resultsRef, {
             quizId,
             userId,
@@ -76,9 +81,10 @@ export const saveQuizResults = async (quizId: string, userId: string | null, ans
 };
 
 export const getQuizResults = async (quizId: string, userId: string | null): Promise<{ answers: UserAnswer[], score: number } | null> => {
-    if (!userId) return null; // Or handle anonymous results differently
+    if (!userId) return null;
     try {
-        const resultsRef = doc(db, "quizResults", `${quizId}_${userId}`);
+        const resultId = `${quizId}_${userId}`;
+        const resultsRef = doc(db, "quizResults", resultId);
         const docSnap = await getDoc(resultsRef);
 
         if (docSnap.exists()) {

@@ -60,8 +60,8 @@ export default function DashboardPage() {
   };
 
   const confirmDeleteQuiz = async () => {
-    if (quizToDelete) {
-        await deleteQuiz(quizToDelete);
+    if (quizToDelete && user) {
+        await deleteQuiz(quizToDelete, user.uid);
         setQuizzes(quizzes.filter((quiz) => quiz.id !== quizToDelete));
         toast({ title: "Quiz Deleted", description: "The quiz has been successfully deleted." });
         setQuizToDelete(null);
@@ -125,7 +125,7 @@ export default function DashboardPage() {
                 {quizzes.map((quiz) => (
                   <TableRow key={quiz.id}>
                     <TableCell className="font-medium">
-                        <Link href={`/quiz/${quiz.id}`} className="hover:underline">
+                        <Link href={hasResults(quiz.id) ? `/quiz/${quiz.id}/results` : `/quiz/${quiz.id}`} className="hover:underline">
                             {quiz.title}
                         </Link>
                     </TableCell>

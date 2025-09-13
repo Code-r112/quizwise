@@ -26,6 +26,8 @@ export default function Header() {
     return name.split(' ').map(n => n[0]).join('');
   };
 
+  const brandLink = user ? '/dashboard' : '/';
+
   return (
     <header
       className={cn(
@@ -33,7 +35,7 @@ export default function Header() {
         scrolled ? "border-b shadow-sm" : ""
       )}
     >
-      <Link className="flex items-center justify-center" href="/">
+      <Link className="flex items-center justify-center" href={brandLink}>
         <BookOpenCheck className="h-6 w-6 text-black" />
         <span className="ml-2 text-lg font-semibold font-headline text-black">QuizWise</span>
       </Link>

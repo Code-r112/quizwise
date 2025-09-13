@@ -8,7 +8,7 @@ import QuizQuestion from './quiz-question';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardFooter } from '@/components/ui/card';
 import { Progress } from '@/components/ui/progress';
-import { Loader2 } from 'lucide-react';
+import { Loader2, UserCheck } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 
 export default function QuizClient({ quizId }: { quizId: string }) {
@@ -16,7 +16,7 @@ export default function QuizClient({ quizId }: { quizId: string }) {
   const [currentQuestionIndex, setCurrentQuestionIndex] = useState(0);
   const [userAnswers, setUserAnswers] = useState<(string | null)[]>([]);
   const [selectedAnswer, setSelectedAnswer] = useState<string | null>(null);
-  const { user } = useAuth();
+  const { user, loading: authLoading, signInWithGoogle } = useAuth();
   
   const router = useRouter();
 
@@ -43,6 +43,8 @@ export default function QuizClient({ quizId }: { quizId: string }) {
   }, [quiz, currentQuestionIndex]);
 
   const handleNext = async () => {
+    if (!user) return; // Should not happen due to the auth gate
+    
     const newAnswers = [...userAnswers];
     newAnswers[currentQuestionIndex] = selectedAnswer;
     setUserAnswers(newAnswers);
@@ -62,7 +64,7 @@ export default function QuizClient({ quizId }: { quizId: string }) {
         };
       });
       const score = (finalAnswers.filter(a => a.isCorrect).length / quiz!.questions.length) * 100;
-      await saveQuizResults(quizId, user?.uid || null, finalAnswers, score);
+      await saveQuizResults(quizId, user.uid, finalAnswers, score);
       router.push(`/quiz/${quizId}/results`);
     }
   };
@@ -73,13 +75,41 @@ export default function QuizClient({ quizId }: { quizId: string }) {
       }
   }, [currentQuestionIndex, userAnswers]);
 
-  if (!quiz || !currentQuestion) {
+  if (authLoading || !quiz) {
     return (
       <div className="flex h-screen items-center justify-center">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
       </div>
     );
   }
+
+  if (!user) {
+    return (
+      <div className="container mx-auto max-w-lg py-24 px-4">
+        <Card className="text-center">
+            <CardHeader>
+                <CardTitle className="font-headline text-2xl">Sign In to Continue</CardTitle>
+            </CardHeader>
+            <CardContent>
+                <p className="text-muted-foreground mb-6">Please sign in to take this quiz and save your results.</p>
+                <Button onClick={signInWithGoogle} size="lg" className="w-full">
+                    <UserCheck className="mr-2 h-5 w-5" />
+                    Sign In with Google
+                </Button>
+            </CardContent>
+        </Card>
+      </div>
+    )
+  }
+
+  if (!currentQuestion) {
+    return (
+      <div className="flex h-screen items-center justify-center">
+        <Loader2 className="h-12 w-12 animate-spin text-primary" />
+      </div>
+    );
+  }
+
 
   const isLastQuestion = currentQuestionIndex === quiz.questions.length - 1;
 
