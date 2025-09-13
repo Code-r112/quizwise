@@ -5,7 +5,8 @@ import { generateQuizFromTopic } from '@/ai/flows/generate-quiz-from-topic';
 import { generateQuizFromText } from '@/ai/flows/generate-quiz-from-text';
 import { generateQuizFromUrl } from '@/ai/flows/generate-quiz-from-url';
 import { aiPoweredFeedback } from '@/ai/flows/receive-ai-powered-feedback';
-import { getAnalyticsAction as getQuizAnalytics } from '@/lib/quiz-store.server';
+import { getAnalyticsAction as getQuizAnalytics, getQuizSubmissionsAction } from '@/lib/quiz-store.server';
+import type { QuizSubmission } from '@/lib/quiz-store.server';
 
 const quizInputSchema = z.object({
   topic: z.string().min(1, 'Topic cannot be empty.'),
@@ -197,5 +198,22 @@ export async function getAnalyticsAction(input: { quizId: string }) {
     } catch (error) {
         console.error('Failed to get quiz analytics:', error);
         return { error: 'Failed to get quiz analytics.', analytics: null };
+    }
+}
+
+
+export async function getSubmissionsAction(input: { quizId: string }): Promise<{ submissions: QuizSubmission[] | null, error: string | null }> {
+    const validatedFields = analyticsInputSchema.safeParse(input);
+
+    if (!validatedFields.success) {
+        return { error: 'Invalid input for submissions.', submissions: null };
+    }
+
+    try {
+        const submissions = await getQuizSubmissionsAction(validatedFields.data.quizId);
+        return { submissions, error: null };
+    } catch (error) {
+        console.error('Failed to get quiz submissions:', error);
+        return { error: 'Failed to get quiz submissions.', submissions: null };
     }
 }

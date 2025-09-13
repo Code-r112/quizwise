@@ -4,15 +4,19 @@ import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
 import { getQuizResults, getQuiz } from '@/lib/quiz-store';
 import type { Quiz, UserAnswer, Question } from '@/lib/types';
+import type { QuizSubmission } from '@/lib/quiz-store.server';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
 import { CheckCircle, XCircle, Users, Target, Share2, Home, Sparkles, Loader2, RefreshCw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
-import { getFeedbackAction, getAnalyticsAction } from '@/app/actions';
+import { getFeedbackAction, getAnalyticsAction, getSubmissionsAction } from '@/app/actions';
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from '@/components/ui/accordion';
 import { useAuth } from '@/hooks/use-auth';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
+import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
+
 
 function Feedback({ question, userAnswer, sourceMaterial }: { question: Question, userAnswer: string, sourceMaterial: string }) {
     const [feedback, setFeedback] = useState('');
@@ -59,6 +63,7 @@ export default function QuizResultsClient({ quizId }: { quizId: string }) {
   const [results, setResults] = useState<{ answers: UserAnswer[], score: number } | null>(null);
   const [quiz, setQuiz] = useState<Quiz | null>(null);
   const [analytics, setAnalytics] = useState<{ attemptCount: number, averageScore: number } | null>(null);
+  const [submissions, setSubmissions] = useState<QuizSubmission[] | null>(null);
   const router = useRouter();
   const { toast } = useToast();
   const { user, loading: authLoading } = useAuth();
@@ -72,12 +77,22 @@ export default function QuizResultsClient({ quizId }: { quizId: string }) {
         if (quizData) {
             setQuiz(quizData);
             
-            const analyticsResult = await getAnalyticsAction({ quizId });
-            if (analyticsResult.analytics) {
-              setAnalytics(analyticsResult.analytics);
-            } else if (analyticsResult.error) {
-              console.error("Failed to get quiz analytics:", analyticsResult.error);
-            }
+            getAnalyticsAction({ quizId }).then(analyticsResult => {
+              if (analyticsResult.analytics) {
+                setAnalytics(analyticsResult.analytics);
+              } else if (analyticsResult.error) {
+                console.error("Failed to get quiz analytics:", analyticsResult.error);
+              }
+            });
+
+            getSubmissionsAction({ quizId }).then(submissionsResult => {
+                if(submissionsResult.submissions) {
+                    setSubmissions(submissionsResult.submissions);
+                } else if (submissionsResult.error) {
+                    console.error("Failed to get quiz submissions:", submissionsResult.error);
+                }
+            });
+
 
             // We need a user to fetch their specific results
             if(user) {
@@ -122,7 +137,7 @@ export default function QuizResultsClient({ quizId }: { quizId: string }) {
   const scoreColor = results.score >= 80 ? 'text-green-500' : results.score >= 50 ? 'text-yellow-500' : 'text-red-500';
 
   return (
-    <div className="container mx-auto max-w-3xl py-12 px-4">
+    <div className="container mx-auto max-w-4xl py-12 px-4">
       <Card>
         <CardHeader className="text-center">
           <CardTitle className="font-headline text-3xl">Quiz Complete!</CardTitle>
@@ -144,44 +159,77 @@ export default function QuizResultsClient({ quizId }: { quizId: string }) {
                     </Card>
                 </div>
             )}
-          <h3 className="font-semibold text-lg mb-4 text-center">Your Answers</h3>
-          <ScrollArea className="h-[400px] w-full">
-            <ul className="space-y-6 p-4">
-              {quiz.questions.map((question, index) => {
-                const userAnswer = results.answers.find(a => a.questionIndex === index);
-                const answerText = userAnswer?.answer || "No answer";
-                const isCorrect = userAnswer?.isCorrect || false;
+          
+            {quiz.userId === user?.uid && submissions && submissions.length > 0 && (
+                <div className="mt-12">
+                    <h3 className="font-semibold text-lg mb-4 text-center">Submissions</h3>
+                    <Card>
+                        <Table>
+                            <TableHeader>
+                                <TableRow>
+                                    <TableHead>Participant</TableHead>
+                                    <TableHead>Score</TableHead>
+                                    <TableHead className="text-right">Date</TableHead>
+                                </TableRow>
+                            </TableHeader>
+                            <TableBody>
+                                {submissions.map(submission => (
+                                    <TableRow key={submission.userId}>
+                                        <TableCell className="font-medium flex items-center gap-3">
+                                            <Avatar className="h-8 w-8">
+                                                <AvatarImage src={submission.userImage} alt={submission.userName} />
+                                                <AvatarFallback>{submission.userName.charAt(0)}</AvatarFallback>
+                                            </Avatar>
+                                            {submission.userName}
+                                        </TableCell>
+                                        <TableCell>{submission.score}%</TableCell>
+                                        <TableCell className="text-right">{submission.completedAt}</TableCell>
+                                    </TableRow>
+                                ))}
+                            </TableBody>
+                        </Table>
+                    </Card>
+                </div>
+            )}
 
-                return (
-                  <li key={index} className="flex items-start space-x-4 p-4 rounded-lg border">
-                    <div>
-                      {isCorrect ? (
-                        <CheckCircle className="h-6 w-6 text-green-500 mt-1" />
-                      ) : (
-                        <XCircle className="h-6 w-6 text-red-500 mt-1" />
-                      )}
-                    </div>
-                    <div className="flex-1">
-                      <p className="font-medium">{question.text}</p>
-                      <p className={cn("text-sm", isCorrect ? "text-muted-foreground" : "text-red-600 font-semibold")}>
-                        Your answer: {answerText}
-                      </p>
-                      {!isCorrect && (
-                         <p className="text-sm text-green-600 font-semibold">Correct answer: {question.correctAnswer}</p>
-                      )}
-                      { userAnswer && !isCorrect && (
-                        <Feedback 
-                          question={question} 
-                          userAnswer={answerText} 
-                          sourceMaterial={quiz.sourceMaterial}
-                        />
-                      )}
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
-          </ScrollArea>
+            <h3 className="font-semibold text-lg mb-4 text-center mt-8">Your Answers</h3>
+            <ScrollArea className="h-[400px] w-full">
+                <ul className="space-y-6 p-4">
+                {quiz.questions.map((question, index) => {
+                    const userAnswer = results.answers.find(a => a.questionIndex === index);
+                    const answerText = userAnswer?.answer || "No answer";
+                    const isCorrect = userAnswer?.isCorrect || false;
+
+                    return (
+                    <li key={index} className="flex items-start space-x-4 p-4 rounded-lg border">
+                        <div>
+                        {isCorrect ? (
+                            <CheckCircle className="h-6 w-6 text-green-500 mt-1" />
+                        ) : (
+                            <XCircle className="h-6 w-6 text-red-500 mt-1" />
+                        )}
+                        </div>
+                        <div className="flex-1">
+                        <p className="font-medium">{question.text}</p>
+                        <p className={cn("text-sm", isCorrect ? "text-muted-foreground" : "text-red-600 font-semibold")}>
+                            Your answer: {answerText}
+                        </p>
+                        {!isCorrect && (
+                            <p className="text-sm text-green-600 font-semibold">Correct answer: {question.correctAnswer}</p>
+                        )}
+                        { userAnswer && !isCorrect && (
+                            <Feedback 
+                            question={question} 
+                            userAnswer={answerText} 
+                            sourceMaterial={quiz.sourceMaterial}
+                            />
+                        )}
+                        </div>
+                    </li>
+                    );
+                })}
+                </ul>
+            </ScrollArea>
         </CardContent>
         <CardFooter className="flex-col sm:flex-row gap-2">
             <Button onClick={() => router.push('/dashboard')} className="w-full sm:w-auto" variant="outline">
