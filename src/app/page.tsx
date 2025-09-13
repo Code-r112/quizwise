@@ -2,7 +2,7 @@ import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader } from '@/components/ui/card';
-import { ArrowRight, FileText, BrainCircuit, Share2, Star, Check } from 'lucide-react';
+import { ArrowRight, FileText, BrainCircuit, Share2, Star, Check, GraduationCap } from 'lucide-react';
 import { placeholderImages } from '@/lib/placeholder-images';
 import {
   Accordion,
@@ -73,7 +73,7 @@ export default function Home() {
                     </CardContent>
                 </Card>
                 <div className="absolute -top-8 -left-8 bg-primary text-primary-foreground p-3 rounded-full shadow-lg transform-gpu transition-all duration-300 ease-out hover:scale-110">
-                    <BrainCircuit className="h-8 w-8"/>
+                    <GraduationCap className="h-8 w-8"/>
                 </div>
                  <div className="absolute -bottom-8 -right-8 bg-accent text-accent-foreground p-3 rounded-full shadow-lg transform-gpu transition-all duration-300 ease-out hover:scale-110">
                     <Star className="h-8 w-8"/>
