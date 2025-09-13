@@ -64,7 +64,7 @@ export default function Header() {
           </DropdownMenu>
         ) : (
           <Button onClick={signInWithGoogle} className="bg-accent hover:bg-accent/90 text-accent-foreground">
-            Sign In with Google
+            Sign In
           </Button>
         )}
       </div>
