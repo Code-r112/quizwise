@@ -1,8 +1,8 @@
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent } from '@/components/ui/card';
-import { ArrowRight, FileText, Link as LinkIcon, Plus, Minus } from 'lucide-react';
+import { Card, CardContent, CardHeader } from '@/components/ui/card';
+import { ArrowRight, FileText, BrainCircuit, Share2, Star, Check } from 'lucide-react';
 import { placeholderImages } from '@/lib/placeholder-images';
 import {
   Accordion,
@@ -35,27 +35,49 @@ export default function Home() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <section className="relative w-full py-12 md:py-24 lg:py-32 xl:py-48 bg-white overflow-hidden">
-        <div
-          className="absolute inset-0 -z-10 h-full w-full bg-white bg-[radial-gradient(circle_500px_at_50%_200px,#C9EBFF,transparent)]" style={{backgroundImage: `url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23dbeafe' fill-opacity='0.4'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E")`}}>
-        </div>
+      <section className="relative w-full py-20 md:py-28 lg:py-32 bg-white overflow-hidden">
+        <div className="absolute inset-0 -z-10 h-full w-full bg-white bg-[radial-gradient(circle_500px_at_50%_200px,#C9EBFF,transparent)]"></div>
         <div className="container px-4 md:px-6">
-          <div className="flex flex-col items-center space-y-4 text-center">
-            <div className="space-y-4">
-              <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl lg:text-7xl font-headline">
-                Unlock Knowledge with AI-Powered Quizzes
-              </h1>
-              <p className="mx-auto max-w-[700px] text-muted-foreground md:text-xl">
-                QuizWise transforms any topic into an interactive quiz, helping you learn faster and assess understanding with ease.
-              </p>
+          <div className="grid gap-12 lg:grid-cols-2 lg:gap-24 items-center">
+            <div className="flex flex-col justify-center space-y-6">
+              <div className="space-y-4">
+                <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl lg:text-7xl font-headline">
+                  Unlock Knowledge with AI-Powered Quizzes
+                </h1>
+                <p className="max-w-[600px] text-muted-foreground md:text-xl">
+                  QuizWise transforms any topic into an interactive quiz, helping you learn faster and assess understanding with ease.
+                </p>
+              </div>
+              <div className="flex flex-col sm:flex-row gap-4">
+                <Button asChild size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground">
+                  <Link href="/dashboard">
+                    Create Your First Quiz
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Link>
+                </Button>
+              </div>
             </div>
-            <div className="space-x-4">
-              <Button asChild size="lg" className="bg-accent hover:bg-accent/90 text-accent-foreground">
-                <Link href="/dashboard">
-                  Create Your First Quiz
-                  <ArrowRight className="ml-2 h-4 w-4" />
-                </Link>
-              </Button>
+            <div className="relative">
+                <Card className="transform-gpu transition-all duration-300 ease-out hover:rotate-[-2deg] hover:scale-105 shadow-2xl">
+                    <CardHeader>
+                        <h3 className="text-lg font-semibold">The Solar System</h3>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        <p className="text-muted-foreground text-sm">Question 1 of 5</p>
+                        <p className="font-medium">Which planet is known as the Red Planet?</p>
+                        <div className="space-y-2">
+                           <div className="flex items-center gap-2 p-3 rounded-md border bg-gray-50"><Check className="text-green-500"/> Mars</div>
+                           <div className="flex items-center gap-2 p-3 rounded-md border"> Jupiter</div>
+                           <div className="flex items-center gap-2 p-3 rounded-md border"> Venus</div>
+                        </div>
+                    </CardContent>
+                </Card>
+                <div className="absolute -top-8 -left-8 bg-primary text-primary-foreground p-3 rounded-full shadow-lg transform-gpu transition-all duration-300 ease-out hover:scale-110">
+                    <BrainCircuit className="h-8 w-8"/>
+                </div>
+                 <div className="absolute -bottom-8 -right-8 bg-accent text-accent-foreground p-3 rounded-full shadow-lg transform-gpu transition-all duration-300 ease-out hover:scale-110">
+                    <Star className="h-8 w-8"/>
+                </div>
             </div>
           </div>
         </div>
@@ -87,7 +109,7 @@ export default function Home() {
             <div className="grid gap-1 text-center">
               <div className="flex justify-center items-center mb-4">
                 <div className="bg-primary text-primary-foreground rounded-full p-4">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-8 w-8 lucide lucide-brain-circuit"><path d="M12 5a3 3 0 1 0-5.993.142"/><path d="M18 5a3 3 0 1 0-5.993.142"/><path d="M5 8.142A3 3 0 1 0 8 5"/><path d="M15 8.142A3 3 0 1 0 18 5"/><path d="M12 12a3 3 0 1 0-5.993.142"/><path d="M18 12a3 3 0 1 0-5.993.142"/><path d="M5 15.142A3 3 0 1 0 8 12"/><path d="M15 15.142A3 3 0 1 0 18 12"/><path d="M12 19a3 3 0 1 0-5.993.142"/><path d="M18 19a3 3 0 1 0-5.993.142"/><path d="M5 22.142A3 3 0 1 0 8 19"/><path d="M15 22.142A3 3 0 1 0 18 19"/><path d="M12 5v7"/><path d="M12 12v7"/><path d="M12 12h-7"/><path d="m19 12-7 0"/><path d="m19 5-7 0"/><path d="M5 5h7"/><path d="M5 19h7"/><path d="m19 19-7 0"/></svg>
+                    <BrainCircuit className="h-8 w-8"/>
                 </div>
               </div>
               <h3 className="text-lg font-bold">AI Generation</h3>
@@ -98,7 +120,7 @@ export default function Home() {
             <div className="grid gap-1 text-center">
               <div className="flex justify-center items-center mb-4">
                  <div className="bg-primary text-primary-foreground rounded-full p-4">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-8 w-8 lucide lucide-share-2"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" x2="15.42" y1="13.51" y2="17.49"/><line x1="15.41" x2="8.59" y1="6.51" y2="10.49"/></svg>
+                    <Share2 className="h-8 w-8"/>
                  </div>
               </div>
               <h3 className="text-lg font-bold">Share & Analyze</h3>
@@ -137,5 +159,3 @@ export default function Home() {
     </div>
   );
 }
-
-    
