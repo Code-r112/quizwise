@@ -2,6 +2,8 @@
 
 import { z } from 'zod';
 import { generateQuizFromTopic } from '@/ai/flows/generate-quiz-from-topic';
+import { generateQuizFromText } from '@/ai/flows/generate-quiz-from-text';
+import { generateQuizFromUrl } from '@/ai/flows/generate-quiz-from-url';
 import { aiPoweredFeedback } from '@/ai/flows/receive-ai-powered-feedback';
 
 const quizInputSchema = z.object({
@@ -10,7 +12,7 @@ const quizInputSchema = z.object({
   numberOfQuestions: z.coerce.number().min(1).max(10),
 });
 
-export async function createQuizAction(prevState: any, formData: FormData) {
+export async function createQuizFromTopicAction(prevState: any, formData: FormData) {
   const validatedFields = quizInputSchema.safeParse({
     topic: formData.get('topic'),
     difficulty: formData.get('difficulty'),
@@ -34,7 +36,6 @@ export async function createQuizAction(prevState: any, formData: FormData) {
       throw new Error('AI failed to generate a quiz.');
     }
     
-    // The AI returns a JSON string, so we parse it.
     const quizData = JSON.parse(result.quiz);
     
     return {
@@ -53,6 +54,100 @@ export async function createQuizAction(prevState: any, formData: FormData) {
       quiz: null,
     };
   }
+}
+
+const textInputSchema = z.object({
+  text: z.string().min(50, 'Text must be at least 50 characters long.'),
+  difficulty: z.enum(['easy', 'medium', 'hard']),
+});
+
+export async function createQuizFromTextAction(prevState: any, formData: FormData) {
+    const validatedFields = textInputSchema.safeParse({
+        text: formData.get('text'),
+        difficulty: formData.get('difficulty'),
+    });
+
+    if (!validatedFields.success) {
+        return {
+            message: 'Invalid form data.',
+            errors: validatedFields.error.flatten().fieldErrors,
+            quiz: null,
+        };
+    }
+
+    const { text, difficulty } = validatedFields.data;
+
+    try {
+        const result = await generateQuizFromText({ text, difficulty });
+        if (!result || !result.quiz) {
+            throw new Error('AI failed to generate a quiz.');
+        }
+
+        const quizData = JSON.parse(result.quiz);
+        const title = quizData.title || `Quiz from your text`;
+
+        return {
+            message: 'Quiz generated successfully.',
+            errors: null,
+            quiz: { ...quizData, title },
+            sourceMaterial: text,
+        };
+    } catch (error) {
+        console.error(error);
+        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
+        return {
+            message: `Failed to generate quiz: ${errorMessage}`,
+            errors: null,
+            quiz: null,
+        };
+    }
+}
+
+const urlInputSchema = z.object({
+  url: z.string().url('Please enter a valid URL.'),
+  difficulty: z.enum(['easy', 'medium', 'hard']),
+});
+
+export async function createQuizFromUrlAction(prevState: any, formData: FormData) {
+    const validatedFields = urlInputSchema.safeParse({
+        url: formData.get('url'),
+        difficulty: formData.get('difficulty'),
+    });
+
+    if (!validatedFields.success) {
+        return {
+            message: 'Invalid form data.',
+            errors: validatedFields.error.flatten().fieldErrors,
+            quiz: null,
+        };
+    }
+
+    const { url, difficulty } = validatedFields.data;
+
+    try {
+        const result = await generateQuizFromUrl({ url, difficulty });
+        if (!result || !result.quiz) {
+            throw new Error('AI failed to generate a quiz.');
+        }
+        
+        const quizData = JSON.parse(result.quiz);
+        const title = quizData.title || `Quiz from ${url}`;
+
+        return {
+            message: 'Quiz generated successfully.',
+            errors: null,
+            quiz: { ...quizData, title },
+            sourceMaterial: `Content from URL: ${url}`,
+        };
+    } catch (error) {
+        console.error(error);
+        const errorMessage = error instanceof Error ? error.message : 'An unknown error occurred.';
+        return {
+            message: `Failed to generate quiz: ${errorMessage}`,
+            errors: null,
+            quiz: null,
+        };
+    }
 }
 
 

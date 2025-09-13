@@ -1,14 +1,20 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useState, useTransition } from 'react';
 import { useFormState, useFormStatus } from 'react-dom';
 import { useRouter } from 'next/navigation';
-import { createQuizAction } from '@/app/actions';
+import {
+  createQuizFromTopicAction,
+  createQuizFromTextAction,
+  createQuizFromUrlAction
+} from '@/app/actions';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { saveQuiz } from '@/lib/quiz-store';
 import { Loader2 } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
@@ -30,12 +36,54 @@ function SubmitButton() {
   );
 }
 
+const initialState = { message: null, errors: null, quiz: null, sourceMaterial: null };
+
+function QuizFormContainer({ state, children }: { state: any, children: React.ReactNode }) {
+    const router = useRouter();
+    const { toast } = useToast();
+
+    useEffect(() => {
+        if (state.quiz) {
+            const quizId = saveQuiz({
+                title: state.quiz.title || "Generated Quiz",
+                sourceMaterial: state.sourceMaterial,
+                questions: state.quiz.questions,
+            });
+
+            if (quizId) {
+                toast({
+                    title: "Success!",
+                    description: "Your quiz has been generated.",
+                });
+                router.push(`/dashboard`);
+            } else {
+                toast({
+                    variant: "destructive",
+                    title: "Error",
+                    description: "Could not save the generated quiz.",
+                });
+            }
+        } else if (state.message && !state.quiz) {
+            toast({
+                variant: "destructive",
+                title: "Generation Failed",
+                description: state.message,
+            });
+        }
+    }, [state, router, toast]);
+
+    return <>{children}</>;
+}
+
+
 export default function CreateQuizPage() {
-  const initialState = { message: null, errors: null, quiz: null };
-  const [state, dispatch] = useFormState(createQuizAction, initialState);
-  const router = useRouter();
-  const { toast } = useToast();
   const { user, loading } = useAuth();
+  const router = useRouter();
+  
+  const [topicState, topicDispatch] = useFormState(createQuizFromTopicAction, initialState);
+  const [textState, textDispatch] = useFormState(createQuizFromTextAction, initialState);
+  const [urlState, urlDispatch] = useFormState(createQuizFromUrlAction, initialState);
+
 
   useEffect(() => {
     if (!loading && !user) {
@@ -43,35 +91,6 @@ export default function CreateQuizPage() {
     }
   }, [user, loading, router]);
 
-  useEffect(() => {
-    if (state.quiz) {
-      const quizId = saveQuiz({
-        title: state.quiz.title || "Generated Quiz",
-        sourceMaterial: state.sourceMaterial,
-        questions: state.quiz.questions,
-      });
-
-      if (quizId) {
-        toast({
-          title: "Success!",
-          description: "Your quiz has been generated.",
-        });
-        router.push(`/dashboard`);
-      } else {
-        toast({
-            variant: "destructive",
-            title: "Error",
-            description: "Could not save the generated quiz.",
-        });
-      }
-    } else if (state.message && !state.quiz) {
-        toast({
-            variant: "destructive",
-            title: "Generation Failed",
-            description: state.message,
-        });
-    }
-  }, [state, router, toast]);
 
   if (loading || !user) {
     return (
@@ -87,54 +106,137 @@ export default function CreateQuizPage() {
         <CardHeader>
           <CardTitle className="font-headline text-3xl">Create a New Quiz</CardTitle>
           <CardDescription>
-            Provide a topic and let our AI build your quiz.
+            Choose your method and let our AI build your quiz.
           </CardDescription>
         </CardHeader>
         <CardContent>
-          <form action={dispatch} className="space-y-8">
-            <div className="space-y-2">
-              <Label htmlFor="topic">Quiz Topic</Label>
-              <Input
-                id="topic"
-                name="topic"
-                placeholder="e.g., 'The Roman Empire' or 'React.js Hooks'"
-                required
-              />
-            </div>
-            
-            <div className="space-y-4">
-              <Label>Difficulty Level</Label>
-              <RadioGroup defaultValue="medium" name="difficulty" className="flex space-x-4">
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="easy" id="easy" />
-                  <Label htmlFor="easy">Easy</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="medium" id="medium" />
-                  <Label htmlFor="medium">Medium</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="hard" id="hard" />
-                  <Label htmlFor="hard">Hard</Label>
-                </div>
-              </RadioGroup>
-            </div>
+          <Tabs defaultValue="topic" className="w-full">
+            <TabsList className="grid w-full grid-cols-3">
+              <TabsTrigger value="topic">From Topic</TabsTrigger>
+              <TabsTrigger value="text">From Text</TabsTrigger>
+              <TabsTrigger value="url">From URL</TabsTrigger>
+            </TabsList>
+            <TabsContent value="topic">
+                <QuizFormContainer state={topicState}>
+                    <form action={topicDispatch} className="space-y-8 mt-6">
+                        <div className="space-y-2">
+                        <Label htmlFor="topic">Quiz Topic</Label>
+                        <Input
+                            id="topic"
+                            name="topic"
+                            placeholder="e.g., 'The Roman Empire' or 'React.js Hooks'"
+                            required
+                        />
+                        </div>
+                        
+                        <div className="space-y-4">
+                        <Label>Difficulty Level</Label>
+                        <RadioGroup defaultValue="medium" name="difficulty" className="flex space-x-4">
+                            <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="easy" id="easy-topic" />
+                            <Label htmlFor="easy-topic">Easy</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="medium" id="medium-topic" />
+                            <Label htmlFor="medium-topic">Medium</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                            <RadioGroupItem value="hard" id="hard-topic" />
+                            <Label htmlFor="hard-topic">Hard</Label>
+                            </div>
+                        </RadioGroup>
+                        </div>
 
-             <div className="space-y-4">
-              <Label htmlFor="numberOfQuestions">Number of Questions (1-10)</Label>
-               <Input 
-                id="numberOfQuestions"
-                name="numberOfQuestions"
-                type="number"
-                min="1"
-                max="10"
-                defaultValue="5"
-               />
-            </div>
-            
-            <SubmitButton />
+                        <div className="space-y-4">
+                        <Label htmlFor="numberOfQuestions">Number of Questions (1-10)</Label>
+                        <Input 
+                            id="numberOfQuestions"
+                            name="numberOfQuestions"
+                            type="number"
+                            min="1"
+                            max="10"
+                            defaultValue="5"
+                        />
+                        </div>
+                        
+                        <SubmitButton />
 
-          </form>
+                    </form>
+                </QuizFormContainer>
+            </TabsContent>
+            <TabsContent value="text">
+              <QuizFormContainer state={textState}>
+                <form action={textDispatch} className="space-y-8 mt-6">
+                    <div className="space-y-2">
+                        <Label htmlFor="text">Your Text</Label>
+                        <Textarea
+                            id="text"
+                            name="text"
+                            placeholder="Paste the text you want to create a quiz from here. Minimum 50 characters."
+                            required
+                            rows={10}
+                        />
+                    </div>
+                    
+                    <div className="space-y-4">
+                        <Label>Difficulty Level</Label>
+                        <RadioGroup defaultValue="medium" name="difficulty" className="flex space-x-4">
+                            <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="easy" id="easy-text" />
+                                <Label htmlFor="easy-text">Easy</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="medium" id="medium-text" />
+                                <Label htmlFor="medium-text">Medium</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="hard" id="hard-text" />
+                                <Label htmlFor="hard-text">Hard</Label>
+                            </div>
+                        </RadioGroup>
+                    </div>
+                    
+                    <SubmitButton />
+                </form>
+              </QuizFormContainer>
+            </TabsContent>
+            <TabsContent value="url">
+              <QuizFormContainer state={urlState}>
+                <form action={urlDispatch} className="space-y-8 mt-6">
+                    <div className="space-y-2">
+                        <Label htmlFor="url">Website URL</Label>
+                        <Input
+                            id="url"
+                            name="url"
+                            type="url"
+                            placeholder="e.g., https://en.wikipedia.org/wiki/Photosynthesis"
+                            required
+                        />
+                    </div>
+                    
+                    <div className="space-y-4">
+                        <Label>Difficulty Level</Label>
+                        <RadioGroup defaultValue="medium" name="difficulty" className="flex space-x-4">
+                             <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="easy" id="easy-url" />
+                                <Label htmlFor="easy-url">Easy</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="medium" id="medium-url" />
+                                <Label htmlFor="medium-url">Medium</Label>
+                            </div>
+                            <div className="flex items-center space-x-2">
+                                <RadioGroupItem value="hard" id="hard-url" />
+                                <Label htmlFor="hard-url">Hard</Label>
+                            </div>
+                        </RadioGroup>
+                    </div>
+                    
+                    <SubmitButton />
+                </form>
+              </QuizFormContainer>
+            </TabsContent>
+          </Tabs>
         </CardContent>
       </Card>
     </div>
