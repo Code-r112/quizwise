@@ -7,7 +7,7 @@ import type { Quiz, UserAnswer, Question } from '@/lib/types';
 import type { QuizSubmission } from '@/lib/quiz-store.server';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { CheckCircle, XCircle, Users, Target, Share2, Home, Sparkles, Loader2, RefreshCw } from 'lucide-react';
+import { CheckCircle, XCircle, Users, Target, Share2, Home, Sparkles, Loader2, RefreshCw, CalendarDays } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
@@ -162,33 +162,31 @@ export default function QuizResultsClient({ quizId }: { quizId: string }) {
           
             {quiz.userId === user?.uid && submissions && submissions.length > 0 && (
                 <div className="mt-12">
-                    <h3 className="font-semibold text-lg mb-4 text-center">Submissions</h3>
-                    <Card>
-                        <Table>
-                            <TableHeader>
-                                <TableRow>
-                                    <TableHead>Participant</TableHead>
-                                    <TableHead>Score</TableHead>
-                                    <TableHead className="text-right">Date</TableHead>
-                                </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                                {submissions.map(submission => (
-                                    <TableRow key={submission.userId}>
-                                        <TableCell className="font-medium flex items-center gap-3">
-                                            <Avatar className="h-8 w-8">
-                                                <AvatarImage src={submission.userImage} alt={submission.userName} />
-                                                <AvatarFallback>{submission.userName.charAt(0)}</AvatarFallback>
-                                            </Avatar>
-                                            {submission.userName}
-                                        </TableCell>
-                                        <TableCell>{submission.score}%</TableCell>
-                                        <TableCell className="text-right">{submission.completedAt}</TableCell>
-                                    </TableRow>
-                                ))}
-                            </TableBody>
-                        </Table>
-                    </Card>
+                    <h3 className="font-semibold text-lg mb-4 text-center">Recent Submissions</h3>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {submissions.map(submission => {
+                            const submissionScoreColor = submission.score >= 80 ? 'text-green-500' : submission.score >= 50 ? 'text-yellow-500' : 'text-red-500';
+                            return (
+                            <Card key={submission.userId} className="flex flex-col">
+                                <CardHeader className="flex flex-row items-center gap-4">
+                                    <Avatar className="h-12 w-12">
+                                        <AvatarImage src={submission.userImage} alt={submission.userName} />
+                                        <AvatarFallback>{submission.userName.charAt(0)}</AvatarFallback>
+                                    </Avatar>
+                                    <div>
+                                        <CardTitle className="text-base">{submission.userName}</CardTitle>
+                                         <p className="text-sm text-muted-foreground flex items-center gap-2 pt-1">
+                                            <CalendarDays className="h-4 w-4"/>
+                                            {submission.completedAt}
+                                        </p>
+                                    </div>
+                                </CardHeader>
+                                <CardContent className="flex-grow flex items-center justify-center">
+                                     <p className={`text-4xl font-bold ${submissionScoreColor}`}>{submission.score}%</p>
+                                </CardContent>
+                            </Card>
+                        )})}
+                    </div>
                 </div>
             )}
 
