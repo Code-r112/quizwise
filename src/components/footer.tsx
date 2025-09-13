@@ -8,7 +8,7 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="space-y-4">
             <Link className="flex items-center" href="/">
-              <BookOpenCheck className="h-8 w-8 text-primary" />
+              <BookOpenCheck className="h-8 w-8 text-white" />
               <span className="ml-2 text-xl font-bold">QuizWise</span>
             </Link>
             <p className="text-gray-400">
