@@ -1,3 +1,4 @@
+
 import Image from 'next/image';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
@@ -36,7 +37,7 @@ export default function Home() {
   return (
     <div className="flex flex-col min-h-screen">
       <section className="relative w-full py-12 md:py-20 lg:py-24 bg-white overflow-hidden">
-        <div className="absolute inset-0 -z-10 h-full w-full bg-white"></div>
+        <div className="absolute inset-0 -z-10 h-full w-full bg-white [background-image:radial-gradient(ellipse_80%_80%_at_50%_-20%,rgba(120,119,198,0.3),rgba(255,255,255,0))]"></div>
         <div className="container px-4 md:px-6">
           <div className="grid gap-12 lg:grid-cols-2 lg:gap-24 items-center">
             <div className="flex flex-col justify-center space-y-6">
@@ -75,7 +76,7 @@ export default function Home() {
                 <div className="absolute -top-8 -left-8 bg-primary text-primary-foreground p-3 rounded-full shadow-lg transform-gpu transition-all duration-300 ease-out hover:scale-110">
                     <GraduationCap className="h-8 w-8"/>
                 </div>
-                 <div className="absolute -bottom-8 -right-8 bg-accent text-accent-foreground p-3 rounded-full shadow-lg transform-gpu transition-all duration-300 ease-out hover:scale-110">
+                 <div className="absolute -bottom-8 -right-8 bg-black text-white p-3 rounded-full shadow-lg transform-gpu transition-all duration-300 ease-out hover:scale-110">
                     <Star className="h-8 w-8"/>
                 </div>
             </div>
