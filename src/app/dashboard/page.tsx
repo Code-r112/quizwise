@@ -7,9 +7,9 @@ import { useRouter } from 'next/navigation';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
-import { getAllQuizzes } from '@/lib/quiz-store';
+import { getAllQuizzes, getQuizResults } from '@/lib/quiz-store';
 import type { Quiz } from '@/lib/types';
-import { Plus, Play, Trash2, Share2, Loader2 } from 'lucide-react';
+import { Plus, Play, Trash2, Share2, Loader2, BarChart2 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
 import {
   AlertDialog,
@@ -47,6 +47,7 @@ export default function DashboardPage() {
     if (quizToDelete) {
         if (typeof window !== 'undefined') {
             localStorage.removeItem(`quiz-${quizToDelete}`);
+            localStorage.removeItem(`results-${quizToDelete}`);
             const quizIds = JSON.parse(localStorage.getItem('quizIds') || '[]').filter((id: string) => id !== quizToDelete);
             localStorage.setItem('quizIds', JSON.stringify(quizIds));
             setQuizzes(getAllQuizzes());
@@ -65,6 +66,11 @@ export default function DashboardPage() {
       });
     });
   };
+  
+  const hasResults = (quizId: string) => {
+    if (typeof window === 'undefined') return false;
+    return getQuizResults(quizId) !== null;
+  }
 
   if (loading || !user) {
     return (
@@ -109,7 +115,7 @@ export default function DashboardPage() {
                 {quizzes.map((quiz) => (
                   <TableRow key={quiz.id}>
                     <TableCell className="font-medium">
-                        <Link href={`/quiz/${quiz.id}/results`} className="hover:underline">
+                        <Link href={`/quiz/${quiz.id}`} className="hover:underline">
                             {quiz.title}
                         </Link>
                     </TableCell>
@@ -119,6 +125,12 @@ export default function DashboardPage() {
                             <Play className="mr-2 h-4 w-4" />
                             Take Quiz
                         </Button>
+                        {hasResults(quiz.id) && (
+                            <Button variant="outline" size="sm" onClick={() => router.push(`/quiz/${quiz.id}/results`)}>
+                                <BarChart2 className="mr-2 h-4 w-4" />
+                                View Results
+                            </Button>
+                        )}
                         <Button variant="outline" size="sm" onClick={() => handleShareQuiz(quiz.id)}>
                             <Share2 className="mr-2 h-4 w-4" />
                             Share

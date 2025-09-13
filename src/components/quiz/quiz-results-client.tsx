@@ -6,7 +6,7 @@ import { getQuizResults, getQuiz } from '@/lib/quiz-store';
 import type { Quiz, UserAnswer, Question } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { CheckCircle, XCircle, FileText, Share2, Home, Sparkles, Loader2 } from 'lucide-react';
+import { CheckCircle, XCircle, FileText, Share2, Home, Sparkles, Loader2, RefreshCw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
@@ -67,7 +67,12 @@ export default function QuizResultsClient({ quizId }: { quizId: string }) {
       setResults(resultsData);
       setQuiz(quizData);
     } else {
-      router.push('/');
+      // If no results, maybe they want to take the quiz
+      if (quizData) {
+        router.push(`/quiz/${quizId}`);
+      } else {
+        router.push('/');
+      }
     }
   }, [quizId, router]);
 
@@ -125,11 +130,13 @@ export default function QuizResultsClient({ quizId }: { quizId: string }) {
                       {!isCorrect && (
                          <p className="text-sm text-green-600 font-semibold">Correct answer: {question.correctAnswer}</p>
                       )}
-                      <Feedback 
+                      { userAnswer && !isCorrect && (
+                        <Feedback 
                           question={question} 
                           userAnswer={answerText} 
                           sourceMaterial={quiz.sourceMaterial}
-                      />
+                        />
+                      )}
                     </div>
                   </li>
                 );
@@ -138,14 +145,14 @@ export default function QuizResultsClient({ quizId }: { quizId: string }) {
           </ScrollArea>
         </CardContent>
         <CardFooter className="flex-col sm:flex-row gap-2">
-            <Button onClick={() => router.push('/dashboard')} className="w-full sm:w-auto">
-                <FileText className="mr-2 h-4 w-4" /> Create New Quiz
+            <Button onClick={() => router.push('/dashboard')} className="w-full sm:w-auto" variant="outline">
+                <Home className="mr-2 h-4 w-4" /> Back to Dashboard
+            </Button>
+            <Button onClick={() => router.push(`/quiz/${quizId}`)} className="w-full sm:w-auto">
+                <RefreshCw className="mr-2 h-4 w-4" /> Retake Quiz
             </Button>
             <Button onClick={handleShare} variant="outline" className="w-full sm:w-auto">
-                <Share2 className="mr-2 h-4 w-4" /> Share Quiz
-            </Button>
-             <Button onClick={() => router.push('/')} variant="ghost" className="w-full sm:w-auto">
-                <Home className="mr-2 h-4 w-4" /> Go Home
+                <Share2 className="mr-2 h-4 w-4" /> Share Results
             </Button>
         </CardFooter>
       </Card>
