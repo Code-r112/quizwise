@@ -125,7 +125,7 @@ export default function DashboardPage() {
                 {quizzes.map((quiz) => (
                   <TableRow key={quiz.id}>
                     <TableCell className="font-medium">
-                        <Link href={hasResults(quiz.id) ? `/quiz/${quiz.id}/results` : `/quiz/${quiz.id}`} className="hover:underline">
+                        <Link href={`/quiz/${quiz.id}/results`} className="hover:underline">
                             {quiz.title}
                         </Link>
                     </TableCell>
