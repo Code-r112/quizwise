@@ -35,13 +35,13 @@ export default function Home() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <section className="relative w-full py-20 md:py-28 lg:py-32 bg-white overflow-hidden">
+      <section className="relative w-full py-12 md:py-20 lg:py-24 bg-white overflow-hidden">
         <div className="absolute inset-0 -z-10 h-full w-full bg-white"></div>
         <div className="container px-4 md:px-6">
           <div className="grid gap-12 lg:grid-cols-2 lg:gap-24 items-center">
             <div className="flex flex-col justify-center space-y-6">
               <div className="space-y-4">
-                <h1 className="text-4xl font-bold tracking-tighter sm:text-5xl md:text-6xl lg:text-7xl font-headline">
+                <h1 className="text-5xl font-bold tracking-tighter sm:text-6xl md:text-7xl lg:text-8xl font-headline">
                   Unlock Knowledge with AI-Powered Quizzes
                 </h1>
                 <p className="max-w-[600px] text-muted-foreground md:text-xl">
@@ -88,7 +88,7 @@ export default function Home() {
           <div className="flex flex-col items-center justify-center space-y-4 text-center">
             <div className="space-y-2">
               <div className="inline-block rounded-lg bg-secondary px-3 py-1 text-sm">Key Features</div>
-              <h2 className="text-4xl font-bold tracking-tighter sm:text-6xl font-headline">How QuizWise Works</h2>
+              <h2 className="text-5xl font-bold tracking-tighter sm:text-7xl font-headline">How QuizWise Works</h2>
               <p className="max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
                 Generate, share, and analyze quizzes in three simple steps. Our AI does the heavy lifting, so you can focus on learning.
               </p>
@@ -136,7 +136,7 @@ export default function Home() {
         <div className="container px-4 md:px-6">
           <div className="flex flex-col items-center justify-center space-y-4 text-center">
             <div className="space-y-2">
-              <h2 className="text-4xl font-bold tracking-tighter sm:text-6xl font-headline">Frequently Asked Questions</h2>
+              <h2 className="text-5xl font-bold tracking-tighter sm:text-7xl font-headline">Frequently Asked Questions</h2>
               <p className="max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
                 Have questions? We've got answers.
               </p>
