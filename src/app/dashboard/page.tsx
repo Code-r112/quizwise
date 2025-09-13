@@ -9,13 +9,27 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from '@/components/ui/table';
 import { getAllQuizzes } from '@/lib/quiz-store';
 import type { Quiz } from '@/lib/types';
-import { Plus, Play, Trash2, Loader2 } from 'lucide-react';
+import { Plus, Play, Trash2, Share2, Loader2 } from 'lucide-react';
 import { useAuth } from '@/hooks/use-auth';
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog"
+import { useToast } from '@/hooks/use-toast';
 
 export default function DashboardPage() {
   const [quizzes, setQuizzes] = useState<Quiz[]>([]);
+  const [quizToDelete, setQuizToDelete] = useState<string | null>(null);
   const router = useRouter();
   const { user, loading } = useAuth();
+  const { toast } = useToast();
 
   useEffect(() => {
     if (!loading && !user) {
@@ -29,13 +43,27 @@ export default function DashboardPage() {
     router.push(`/quiz/${quizId}`);
   };
 
-  const handleDeleteQuiz = (quizId: string) => {
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem(`quiz-${quizId}`);
-      const quizIds = JSON.parse(localStorage.getItem('quizIds') || '[]').filter((id: string) => id !== quizId);
-      localStorage.setItem('quizIds', JSON.stringify(quizIds));
-      setQuizzes(getAllQuizzes());
+  const confirmDeleteQuiz = () => {
+    if (quizToDelete) {
+        if (typeof window !== 'undefined') {
+            localStorage.removeItem(`quiz-${quizToDelete}`);
+            const quizIds = JSON.parse(localStorage.getItem('quizIds') || '[]').filter((id: string) => id !== quizToDelete);
+            localStorage.setItem('quizIds', JSON.stringify(quizIds));
+            setQuizzes(getAllQuizzes());
+            toast({ title: "Quiz Deleted", description: "The quiz has been successfully deleted." });
+        }
+        setQuizToDelete(null);
     }
+  };
+
+  const handleShareQuiz = (quizId: string) => {
+    const url = `${window.location.origin}/quiz/${quizId}`;
+    navigator.clipboard.writeText(url).then(() => {
+      toast({
+        title: 'Link Copied!',
+        description: 'Quiz link has been copied to your clipboard.',
+      });
+    });
   };
 
   if (loading || !user) {
@@ -47,7 +75,11 @@ export default function DashboardPage() {
   }
   
   return (
-    <div className="container mx-auto max-w-4xl py-12 px-4">
+    <div className="container mx-auto max-w-4xl py-24 px-4">
+        <div className="mb-8">
+            <h1 className="text-3xl font-bold">Hello, {user?.displayName?.split(' ')[0] || 'User'}!</h1>
+            <p className="text-muted-foreground">Welcome back to your dashboard.</p>
+        </div>
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
             <div>
@@ -76,17 +108,42 @@ export default function DashboardPage() {
               <TableBody>
                 {quizzes.map((quiz) => (
                   <TableRow key={quiz.id}>
-                    <TableCell className="font-medium">{quiz.title}</TableCell>
+                    <TableCell className="font-medium">
+                        <Link href={`/quiz/${quiz.id}/results`} className="hover:underline">
+                            {quiz.title}
+                        </Link>
+                    </TableCell>
                     <TableCell>{quiz.questions.length}</TableCell>
                     <TableCell className="text-right space-x-2">
                        <Button variant="outline" size="sm" onClick={() => handleTakeQuiz(quiz.id)}>
                             <Play className="mr-2 h-4 w-4" />
                             Take Quiz
                         </Button>
-                         <Button variant="destructive" size="sm" onClick={() => handleDeleteQuiz(quiz.id)}>
-                            <Trash2 className="mr-2 h-4 w-4" />
-                            Delete
+                        <Button variant="outline" size="sm" onClick={() => handleShareQuiz(quiz.id)}>
+                            <Share2 className="mr-2 h-4 w-4" />
+                            Share
                         </Button>
+                        <AlertDialog>
+                          <AlertDialogTrigger asChild>
+                            <Button variant="destructive" size="sm" onClick={() => setQuizToDelete(quiz.id)}>
+                                <Trash2 className="mr-2 h-4 w-4" />
+                                Delete
+                            </Button>
+                          </AlertDialogTrigger>
+                          <AlertDialogContent>
+                            <AlertDialogHeader>
+                              <AlertDialogTitle>Are you sure?</AlertDialogTitle>
+                              <AlertDialogDescription>
+                                This action cannot be undone. This will permanently delete your quiz
+                                and any associated results.
+                              </AlertDialogDescription>
+                            </AlertDialogHeader>
+                            <AlertDialogFooter>
+                              <AlertDialogCancel onClick={() => setQuizToDelete(null)}>Cancel</AlertDialogCancel>
+                              <AlertDialogAction onClick={confirmDeleteQuiz}>Delete</AlertDialogAction>
+                            </AlertDialogFooter>
+                          </AlertDialogContent>
+                        </AlertDialog>
                     </TableCell>
                   </TableRow>
                 ))}
