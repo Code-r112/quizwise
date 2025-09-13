@@ -64,6 +64,8 @@ export default function QuizResultsClient({ quizId }: { quizId: string }) {
   const [quiz, setQuiz] = useState<Quiz | null>(null);
   const [analytics, setAnalytics] = useState<{ attemptCount: number, averageScore: number } | null>(null);
   const [submissions, setSubmissions] = useState<QuizSubmission[] | null>(null);
+  const [isOwner, setIsOwner] = useState(false);
+  const [pageLoading, setPageLoading] = useState(true);
   const router = useRouter();
   const { toast } = useToast();
   const { user, loading: authLoading } = useAuth();
@@ -73,18 +75,27 @@ export default function QuizResultsClient({ quizId }: { quizId: string }) {
     if(authLoading) return;
 
     const fetchQuizAndResults = async () => {
+        setPageLoading(true);
         const quizData = await getQuiz(quizId);
-        if (quizData) {
-            setQuiz(quizData);
-            
-            getAnalyticsAction({ quizId }).then(analyticsResult => {
-              if (analyticsResult.analytics) {
-                setAnalytics(analyticsResult.analytics);
-              } else if (analyticsResult.error) {
-                console.error("Failed to get quiz analytics:", analyticsResult.error);
-              }
-            });
 
+        if (!quizData) {
+            router.push('/');
+            return;
+        }
+        setQuiz(quizData);
+
+        const owner = quizData.userId === user?.uid;
+        setIsOwner(owner);
+
+        getAnalyticsAction({ quizId }).then(analyticsResult => {
+            if (analyticsResult.analytics) {
+                setAnalytics(analyticsResult.analytics);
+            } else if (analyticsResult.error) {
+                console.error("Failed to get quiz analytics:", analyticsResult.error);
+            }
+        });
+
+        if (owner) {
             getSubmissionsAction({ quizId }).then(submissionsResult => {
                 if(submissionsResult.submissions) {
                     setSubmissions(submissionsResult.submissions);
@@ -92,25 +103,24 @@ export default function QuizResultsClient({ quizId }: { quizId: string }) {
                     console.error("Failed to get quiz submissions:", submissionsResult.error);
                 }
             });
-
-
-            // We need a user to fetch their specific results
-            if(user) {
-                const resultsData = await getQuizResults(quizId, user.uid);
-                 if (resultsData) {
-                    setResults(resultsData);
-                } else {
-                    // No results for this user, push to take the quiz
-                    router.push(`/quiz/${quizId}`);
-                }
-            } else {
-                // If user is not logged in, they can't have results yet.
-                 router.push(`/quiz/${quizId}`);
-            }
-           
-        } else {
-            router.push('/');
         }
+        
+        if(user) {
+            const resultsData = await getQuizResults(quizId, user.uid);
+            if (resultsData) {
+                setResults(resultsData);
+            } else if (!owner) {
+                // Not the owner and no results, so must take the quiz.
+                router.push(`/quiz/${quizId}`);
+                return;
+            }
+        } else {
+            // Not logged in, redirect to quiz page which will show login prompt.
+            router.push(`/quiz/${quizId}`);
+            return;
+        }
+
+        setPageLoading(false);
     };
 
     fetchQuizAndResults();
@@ -126,7 +136,7 @@ export default function QuizResultsClient({ quizId }: { quizId: string }) {
     });
   };
 
-  if (!results || !quiz) {
+  if (pageLoading || !quiz) {
     return (
        <div className="flex h-screen items-center justify-center">
         <Loader2 className="h-12 w-12 animate-spin text-primary" />
@@ -134,15 +144,17 @@ export default function QuizResultsClient({ quizId }: { quizId: string }) {
     );
   }
 
-  const scoreColor = results.score >= 80 ? 'text-green-500' : results.score >= 50 ? 'text-yellow-500' : 'text-red-500';
+  const scoreColor = results ? (results.score >= 80 ? 'text-green-500' : results.score >= 50 ? 'text-yellow-500' : 'text-red-500') : 'text-gray-500';
 
   return (
     <div className="container mx-auto max-w-4xl py-12 px-4">
       <Card>
         <CardHeader className="text-center">
-          <CardTitle className="font-headline text-3xl">Quiz Complete!</CardTitle>
-          <CardDescription>Here's how you did on "{quiz.title}"</CardDescription>
-          <p className={`text-6xl font-bold pt-4 ${scoreColor}`}>{Math.round(results.score)}%</p>
+          <CardTitle className="font-headline text-3xl">{isOwner ? 'Quiz Analytics' : 'Quiz Complete!'}</CardTitle>
+          <CardDescription>Here's how {isOwner? 'everyone' : 'you'} did on "{quiz.title}"</CardDescription>
+          {results && (
+            <p className={`text-6xl font-bold pt-4 ${scoreColor}`}>{Math.round(results.score)}%</p>
+          )}
         </CardHeader>
         <CardContent>
             {analytics && (
@@ -160,7 +172,7 @@ export default function QuizResultsClient({ quizId }: { quizId: string }) {
                 </div>
             )}
           
-            {quiz.userId === user?.uid && submissions && submissions.length > 0 && (
+            {isOwner && submissions && submissions.length > 0 && (
                 <div className="mt-12">
                     <h3 className="font-semibold text-lg mb-4 text-center">Recent Submissions</h3>
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -189,58 +201,65 @@ export default function QuizResultsClient({ quizId }: { quizId: string }) {
                     </div>
                 </div>
             )}
+            
+            {results && (
+              <>
+                <h3 className="font-semibold text-lg mb-4 text-center mt-8">Your Answers</h3>
+                <ScrollArea className="h-[400px] w-full">
+                    <ul className="space-y-6 p-4">
+                    {quiz.questions.map((question, index) => {
+                        const userAnswer = results.answers.find(a => a.questionIndex === index);
+                        const answerText = userAnswer?.answer || "No answer";
+                        const isCorrect = userAnswer?.isCorrect || false;
 
-            <h3 className="font-semibold text-lg mb-4 text-center mt-8">Your Answers</h3>
-            <ScrollArea className="h-[400px] w-full">
-                <ul className="space-y-6 p-4">
-                {quiz.questions.map((question, index) => {
-                    const userAnswer = results.answers.find(a => a.questionIndex === index);
-                    const answerText = userAnswer?.answer || "No answer";
-                    const isCorrect = userAnswer?.isCorrect || false;
+                        return (
+                        <li key={index} className="flex items-start space-x-4 p-4 rounded-lg border">
+                            <div>
+                            {isCorrect ? (
+                                <CheckCircle className="h-6 w-6 text-green-500 mt-1" />
+                            ) : (
+                                <XCircle className="h-6 w-6 text-red-500 mt-1" />
+                            )}
+                            </div>
+                            <div className="flex-1">
+                            <p className="font-medium">{question.text}</p>
+                            <p className={cn("text-sm", isCorrect ? "text-muted-foreground" : "text-red-600 font-semibold")}>
+                                Your answer: {answerText}
+                            </p>
+                            {!isCorrect && (
+                                <p className="text-sm text-green-600 font-semibold">Correct answer: {question.correctAnswer}</p>
+                            )}
+                            { userAnswer && !isCorrect && (
+                                <Feedback 
+                                question={question} 
+                                userAnswer={answerText} 
+                                sourceMaterial={quiz.sourceMaterial}
+                                />
+                            )}
+                            </div>
+                        </li>
+                        );
+                    })}
+                    </ul>
+                </ScrollArea>
+              </>
+            )}
 
-                    return (
-                    <li key={index} className="flex items-start space-x-4 p-4 rounded-lg border">
-                        <div>
-                        {isCorrect ? (
-                            <CheckCircle className="h-6 w-6 text-green-500 mt-1" />
-                        ) : (
-                            <XCircle className="h-6 w-6 text-red-500 mt-1" />
-                        )}
-                        </div>
-                        <div className="flex-1">
-                        <p className="font-medium">{question.text}</p>
-                        <p className={cn("text-sm", isCorrect ? "text-muted-foreground" : "text-red-600 font-semibold")}>
-                            Your answer: {answerText}
-                        </p>
-                        {!isCorrect && (
-                            <p className="text-sm text-green-600 font-semibold">Correct answer: {question.correctAnswer}</p>
-                        )}
-                        { userAnswer && !isCorrect && (
-                            <Feedback 
-                            question={question} 
-                            userAnswer={answerText} 
-                            sourceMaterial={quiz.sourceMaterial}
-                            />
-                        )}
-                        </div>
-                    </li>
-                    );
-                })}
-                </ul>
-            </ScrollArea>
         </CardContent>
         <CardFooter className="flex-col sm:flex-row gap-2">
             <Button onClick={() => router.push('/dashboard')} className="w-full sm:w-auto" variant="outline">
                 <Home className="mr-2 h-4 w-4" /> Back to Dashboard
             </Button>
             <Button onClick={() => router.push(`/quiz/${quizId}`)} className="w-full sm:w-auto">
-                <RefreshCw className="mr-2 h-4 w-4" /> Retake Quiz
+                <RefreshCw className="mr-2 h-4 w-4" /> {results ? 'Retake' : 'Take'} Quiz
             </Button>
             <Button onClick={handleShare} variant="outline" className="w-full sm:w-auto">
-                <Share2 className="mr-2 h-4 w-4" /> Share Results
+                <Share2 className="mr-2 h-4 w-4" /> Share {results ? 'Results' : 'Quiz'}
             </Button>
         </CardFooter>
       </Card>
     </div>
   );
 }
+
+  
