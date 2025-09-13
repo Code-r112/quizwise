@@ -96,3 +96,27 @@ export const getQuizResults = async (quizId: string, userId: string | null): Pro
         return null;
     }
 };
+
+export const getQuizAnalytics = async (quizId: string): Promise<{ attemptCount: number; averageScore: number } | null> => {
+    try {
+        const q = query(collection(db, "quizResults"), where("quizId", "==", quizId));
+        const querySnapshot = await getDocs(q);
+        
+        if (querySnapshot.empty) {
+            return { attemptCount: 0, averageScore: 0 };
+        }
+
+        let totalScore = 0;
+        querySnapshot.forEach((doc) => {
+            totalScore += doc.data().score;
+        });
+
+        const attemptCount = querySnapshot.size;
+        const averageScore = totalScore / attemptCount;
+
+        return { attemptCount, averageScore };
+    } catch (error) {
+        console.error('Failed to get quiz analytics from Firestore', error);
+        return null;
+    }
+};

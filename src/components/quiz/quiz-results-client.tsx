@@ -2,11 +2,11 @@
 
 import { useState, useEffect, useCallback } from 'react';
 import { useRouter } from 'next/navigation';
-import { getQuizResults, getQuiz } from '@/lib/quiz-store';
+import { getQuizResults, getQuiz, getQuizAnalytics } from '@/lib/quiz-store';
 import type { Quiz, UserAnswer, Question } from '@/lib/types';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription, CardFooter } from '@/components/ui/card';
-import { CheckCircle, XCircle, FileText, Share2, Home, Sparkles, Loader2, RefreshCw } from 'lucide-react';
+import { CheckCircle, XCircle, Users, Target, Share2, Home, Sparkles, Loader2, RefreshCw } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { cn } from '@/lib/utils';
@@ -58,6 +58,7 @@ function Feedback({ question, userAnswer, sourceMaterial }: { question: Question
 export default function QuizResultsClient({ quizId }: { quizId: string }) {
   const [results, setResults] = useState<{ answers: UserAnswer[], score: number } | null>(null);
   const [quiz, setQuiz] = useState<Quiz | null>(null);
+  const [analytics, setAnalytics] = useState<{ attemptCount: number, averageScore: number } | null>(null);
   const router = useRouter();
   const { toast } = useToast();
   const { user, loading: authLoading } = useAuth();
@@ -70,6 +71,8 @@ export default function QuizResultsClient({ quizId }: { quizId: string }) {
         const quizData = await getQuiz(quizId);
         if (quizData) {
             setQuiz(quizData);
+            const analyticsData = await getQuizAnalytics(quizId);
+            setAnalytics(analyticsData);
             // We need a user to fetch their specific results
             if(user) {
                 const resultsData = await getQuizResults(quizId, user.uid);
@@ -121,6 +124,20 @@ export default function QuizResultsClient({ quizId }: { quizId: string }) {
           <p className={`text-6xl font-bold pt-4 ${scoreColor}`}>{Math.round(results.score)}%</p>
         </CardHeader>
         <CardContent>
+            {analytics && (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-8 text-center">
+                    <Card className="p-4">
+                        <Users className="h-8 w-8 mx-auto text-muted-foreground" />
+                        <p className="text-2xl font-bold">{analytics.attemptCount}</p>
+                        <p className="text-sm text-muted-foreground">Total Attempts</p>
+                    </Card>
+                     <Card className="p-4">
+                        <Target className="h-8 w-8 mx-auto text-muted-foreground" />
+                        <p className="text-2xl font-bold">{Math.round(analytics.averageScore)}%</p>
+                        <p className="text-sm text-muted-foreground">Average Score</p>
+                    </Card>
+                </div>
+            )}
           <h3 className="font-semibold text-lg mb-4 text-center">Your Answers</h3>
           <ScrollArea className="h-[400px] w-full">
             <ul className="space-y-6 p-4">
